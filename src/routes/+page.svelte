@@ -4,11 +4,13 @@
 	import GraphScore from './GraphScore.svelte';
 
 
-    let gameCode = '';
-    let playerName = '';
-    let error = '';
+    let gameCode = $state('');
+    let playerName = $state('');
+    let error = $state('');
 
-    async function handleSubmit() {
+    async function handleSubmit(event: Event) {
+        event.preventDefault();
+
         // Validate inputs
         if (!gameCode.trim()) {
             error = 'Game Code is required';
@@ -61,7 +63,7 @@
             </div>
         {/if}
 
-        <form on:submit|preventDefault={handleSubmit}>
+        <form onsubmit={handleSubmit}>
             <div class="mb-4">
                 <label for="gameCode" class="block text-gray-700 font-bold mb-2">
                     Game Code

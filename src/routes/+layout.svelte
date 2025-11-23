@@ -5,63 +5,27 @@
 	import Header from './Header.svelte';
 	import './styles.css';
 
-	/** @type {import('./$types').LayoutServerData} */
-	export let data;
+	let { data, children } = $props();
 
-	$: if (browser && data?.analyticsId) {
-		webVitals({
-			path: $page.url.pathname,
-			params: $page.params,
-			analyticsId: data.analyticsId
-		});
-	}
+	$effect(() => {
+		if (browser && data?.analyticsId) {
+			webVitals({
+				path: $page.url.pathname,
+				params: $page.params,
+				analyticsId: data.analyticsId
+			});
+		}
+	});
 </script>
 
-<div class="app">
+<div class="app bg-slate-50 min-h-screen font-sans text-slate-900">
 	<Header />
 
-	<main>
-		<slot />
+	<main class="flex-1 w-full max-w-4xl mx-auto p-4 md:p-8">
+		{@render children()}
 	</main>
 
-	<footer>
-		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
+	<footer class="py-6 text-center text-slate-500 text-sm">
+		<p>Built with <a href="https://kit.svelte.dev" class="font-bold text-slate-700 hover:text-blue-600 transition-colors">SvelteKit</a></p>
 	</footer>
 </div>
-
-<style>
-	.app {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh;
-	}
-
-	main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		width: 100%;
-		max-width: 64rem;
-		margin: 0 auto;
-		box-sizing: border-box;
-	}
-
-	footer {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		padding: 12px;
-	}
-
-	footer a {
-		font-weight: bold;
-	}
-
-	@media (min-width: 480px) {
-		footer {
-			padding: 12px 0;
-		}
-	}
-</style>

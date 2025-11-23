@@ -5,54 +5,63 @@
     import { db } from '../../../firebase/firebase';
     import GraphScore from "../../GraphScore.svelte";
 
-    export let data: {
-        question?: string
-        questionType?: string
-        answerer?: string
-    } = {}
-    export let form: {
-        success?: boolean
-        message?: string
-        error?: string
-    } = {}
+    let { data, form } = $props<{
+        data: {
+            question?: string
+            questionType?: string
+            answerer?: string
+        }
+        form: {
+            success?: boolean
+            message?: string
+            error?: string
+        }
+    }>();
 
-    let gameCode = ''
-    let playerName = ''
-    let formSubmitted = false
-    let submitting = false
-    let message: string | null = null
+    let gameCode = $state('');
+    let playerName = $state('');
+    let formSubmitted = $state(false);
+    let submitting = $state(false);
+    let message: string | null = $state(null);
 
     onMount(() => {
         gameCode = localStorage.getItem('gameCode') || ''
         playerName = localStorage.getItem('playerName') || ''
     })
 
-    $: {
+    $effect(() => {
         if (form?.success) {
             formSubmitted = true
-            message= form.message ?? null
+            message = form.message ?? null
         }
-    }
+    });
 
     async function resetForm() {
-    try {    
-        const roundStatus: string = (await get(ref(db, `gamecode/${gameCode}/roundStatus/`))).val()
-        if(roundStatus === 'inProgress'){ 
-            form.error = 'Please wait until everyone has answered!'
-            return
+        try {
+            const roundStatus: string = (await get(ref(db, `gamecode/${gameCode}/roundStatus/`))).val()
+            if(roundStatus === 'inProgress'){
+                // We shouldn't mutate props directly in Svelte 5 if we want to reflect it back,
+                // but 'form' is likely immutable from the server load.
+                // However, we can handle error display locally if needed, but 'form' is what we get from the action result.
+                // If we want to show an error, we should probably have a local error state or rely on re-submission.
+                // But for now, let's just alert or set a local error state if we were to add one.
+                // But wait, the original code did `form.error = ...`.
+                // In Svelte 5 props are read-only. We should use a derived state or a local state initialized from props.
+                alert('Please wait until everyone has answered!');
+                return
+            }
+            formSubmitted = false
+            message = null
+            submitting = false
+
+            // reload page. i have to do this so everyone but the last person to answer also gets the new question
+            await invalidateAll()
+
+        } catch (error) {
+            console.error('Error resetting form:', error)
+            alert('Failed to reset. Please try again.')
         }
-        formSubmitted = false
-        message = null
-        submitting = false
-        
-        // reload page. i have to do this so everyone but the last person to answer also gets the new question
-        await invalidateAll()
-        
-    } catch (error) {
-        console.error('Error resetting form:', error)
-        alert('Failed to reset. Please try again.')
     }
-}
 
     async function endGame() {
         try {
@@ -116,7 +125,7 @@
             </h2>
             <p>Please wait until everyone has answered and then hit next question</p>
             <button 
-                on:click={resetForm}
+                onclick={resetForm}
                 class="retry-btn"
             >
                 Next Question
@@ -129,7 +138,7 @@
         <GraphScore gameCode={gameCode}/>
     {/if}
     <button 
-    on:click={endGame}
+    onclick={endGame}
     class="end-game-btn"
 >
     End Game
