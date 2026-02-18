@@ -1,128 +1,187 @@
-import { ref, get, set, update } from 'firebase/database';
-import { addQuestion, db, getGame, selectRandomAnswerer } from '../../../firebase/firebase';
+import { adminDb } from '$lib/server/firebaseAdmin';
 import { generatePersonalQuestion } from '../../../game/questionGenerator';
 import type { PageServerLoad } from './$types';
-import { fail, type Actions } from '@sveltejs/kit';
-import { trackScores } from '../../../game/trackScore';
+import { fail, redirect, isRedirect, type Actions } from '@sveltejs/kit';
+import { processRoundScores } from '$lib/server/scoring';
 
-export const load: PageServerLoad = async ({ cookies, locals }) => {
-	const gameCode = cookies.get('gameCode') || 'Error no gameCode';
-	const playerName = cookies.get('playerName') || 'Error no Playername';
+export const load: PageServerLoad = async ({ cookies, params }) => {
+	const gameCode = params.gameCode.toUpperCase();
+	const playerName = cookies.get('playerName');
+
+	if (!playerName) {
+		throw redirect(303, `/?error=Session expired. Please join again.&gameCode=${gameCode}`);
+	}
 
 	try {
-		const playersRef = ref(db, `gamecode/${gameCode}/players`);
-		const playersSnapshot = await get(playersRef);
-		const players = playersSnapshot.val() || {};
-		const playersList = Object.keys(players);
+		if (!adminDb) {
+			return {
+				question: 'Database not initialized',
+				error: 'Server configuration error (Admin SDK).',
+				gameCode,
+				playerName
+			};
+		}
+		const gameRef = adminDb.ref(`gamecode/${gameCode}`);
+		const snapshot = await gameRef.get();
 
-		// make sure player is in the players list
-		if (!players[playerName]) {
-			await update(playersRef, {
-				[playerName]: true
-			});
-			playersList.push(playerName);
+		if (!snapshot.exists()) {
+			throw redirect(303, '/?error=Game not found.');
 		}
 
-		const game = await getGame(gameCode);
+		const game = snapshot.val();
 
-		//make sure there is a question (should only hit this on first load)
+		// Ensure player is in game
+		if (!game.players || !game.players[playerName]) {
+			await gameRef.child('players').update({ [playerName]: true });
+		}
+
+		// Handle question generation if not present
 		if (!game.questions) {
-			const answerer =
-				(await selectRandomAnswerer(gameCode, playersList)) || 'this is to keep typescript happy';
+			const playersList = Object.keys(game.players || { [playerName]: true });
+			const answerer = playersList[Math.floor(Math.random() * playersList.length)];
 			const questionData = await generatePersonalQuestion(answerer);
 
-			addQuestion(gameCode, questionData.question);
+			await gameRef.update({
+				questions: questionData.question,
+				currentAnswerer: { name: answerer },
+				roundStatus: 'waiting'
+			});
+
 			return {
 				question: questionData.question,
-				answerer: answerer
-			};
-		} else {
-			return {
-				question: game.questions,
-				answerer: game.currentAnswerer
+				answerer: answerer,
+				gameCode,
+				playerName
 			};
 		}
-	} catch (error) {
-		console.error('Critical error in load function:', error);
+
 		return {
-			question: 'Could not generate a question',
-			questionType: 'error',
-			answerer: playerName
+			question: game.questions,
+			answerer: game.currentAnswerer?.name || 'Unknown',
+			gameCode,
+			playerName
+		};
+	} catch (error) {
+		if (isRedirect(error)) throw error;
+		console.error('Critical error in play load function:', error);
+		return {
+			question: 'Could not load the question',
+			error: 'Something went wrong. Please try again.',
+			gameCode,
+			playerName
 		};
 	}
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies }) => {
-		//getting the client side data i need
-		const gameCode = cookies.get('gameCode') || 'Error no gameCode';
-		const playerName = cookies.get('playerName') || 'Error no Playername';
+	submitAnswer: async ({ request, cookies, params }) => {
+		const gameCode = params.gameCode?.toUpperCase();
+		const playerName = cookies.get('playerName');
 		const data = await request.formData();
 		const answer = data.get('answer')?.toString();
 
-		if (!answer) {
-			return fail(400, { error: 'Answer is required' });
+		if (!gameCode || !playerName || !answer) {
+			return fail(400, { error: 'Game Code, Player Name, and Answer are required' });
 		}
 
 		try {
-			const game = await getGame(gameCode);
-			const answeredPlayersRef = ref(db, `gamecode/${gameCode}/answeredPlayers`);
-			const answeredPlayersSnapshot = await get(answeredPlayersRef);
-			const answerdPlayers = answeredPlayersSnapshot.val() || {};
+			if (!adminDb) return fail(500, { error: 'Database not initialized' });
+			const gameRef = adminDb.ref(`gamecode/${gameCode}`);
+			const snapshot = await gameRef.get();
+			const game = snapshot.val();
 
-			if (game.currentAnswerer.name != playerName && !game.correctAnswer) {
-				return fail(400, {
-					error: `Just a second. ${game.currentAnswerer.name} needs to answer first`
-				});
+			if (!game) return fail(404, { error: 'Game not found' });
+
+			const answeredPlayersRef = gameRef.child('answeredPlayers');
+			const answeredSnapshot = await answeredPlayersRef.get();
+			const answeredPlayers = answeredSnapshot.val() || {};
+
+			if (answeredPlayers[playerName]) {
+				return fail(400, { error: 'You already answered this round!' });
 			}
 
-			if (answerdPlayers[playerName]) {
-				return fail(400, { error: `You have already answered this question ${playerName}` });
+			// If they are the answerer, set the correct answer
+			if (game.currentAnswerer?.name === playerName) {
+				await gameRef.update({ correctAnswer: answer });
 			} else {
-				await update(answeredPlayersRef, {
-					[playerName]: true
-				});
+				// If they are a guesser, store their guess
+				await gameRef.child('guesses').update({ [playerName]: answer });
 			}
-			const message = await trackScores(
-				game.questions,
-				game.currentAnswerer.name,
-				playerName,
-				answer,
-				gameCode
-			);
-			await set(ref(db, `gamecode/${gameCode}/roundStatus/`), 'inProgress');
 
-			const playersSnapshot = await get(ref(db, `gamecode/${gameCode}/players`));
+			// Add to answered players
+			await answeredPlayersRef.update({ [playerName]: true });
+
+			// Check if everyone has answered
+			const playersSnapshot = await gameRef.child('players').get();
 			const players = Object.keys(playersSnapshot.val() || {});
-			const answeredSnapshot = await get(ref(db, `gamecode/${gameCode}/answeredPlayers`));
-			const answered = Object.keys(answeredSnapshot.val() || {});
+			const updatedAnsweredSnapshot = await answeredPlayersRef.get();
+			const updatedAnswered = Object.keys(updatedAnsweredSnapshot.val() || {});
 
-			if (answered.length === players.length) {
-				await set(ref(db, `gamecode/${gameCode}/answeredPlayers/`), {});
-				await set(ref(db, `gamecode/${gameCode}/correctAnswer/`), {});
-				await set(ref(db, `gamecode/${gameCode}/roundStatus/`), {});
-				const answerer = (await selectRandomAnswerer(gameCode, players)) || 'Error'; //I dont think itll ever hit error though
-				const questionData = await generatePersonalQuestion(answerer);
-				addQuestion(gameCode, questionData.question);
-
-				return {
-					success: true,
-					message: message,
-					newQuestion: questionData.question,
-					newAnswerer: answerer
-				};
+			if (updatedAnswered.length === players.length) {
+				// Round complete logic will be handled by a "Next Round" action 
+				// to avoid race conditions and let everyone see the results
+				await gameRef.update({ roundStatus: 'complete' });
 			} else {
-				return {
-					success: true,
-					message: message
-				};
+				await gameRef.update({ roundStatus: 'inProgress' });
 			}
+
+			return { success: true, message: 'Answer submitted!' };
 		} catch (error) {
-			console.error('Error processing answer:', error);
-			return fail(500, {
-				error: 'Failed to process answer',
-				answer: answer
+			console.error('Error submitting answer:', error);
+			return fail(500, { error: 'Failed to submit answer' });
+		}
+	},
+	nextRound: async ({ params }) => {
+		const gameCode = params.gameCode?.toUpperCase();
+		if (!gameCode) return fail(400, { error: 'Game Code is required' });
+
+		try {
+			if (!adminDb) return fail(500, { error: 'Database not initialized' });
+			const gameRef = adminDb.ref(`gamecode/${gameCode}`);
+
+			// Calculate scores before clearing round data
+			await processRoundScores(gameCode);
+
+			const snapshot = await gameRef.get();
+			const game = snapshot.val();
+
+			if (!game) return fail(404, { error: 'Game not found' });
+
+			const players = Object.keys(game.players || {});
+			const nextAnswerer = players[Math.floor(Math.random() * players.length)];
+			const questionData = await generatePersonalQuestion(nextAnswerer);
+
+			await gameRef.update({
+				questions: questionData.question,
+				currentAnswerer: { name: nextAnswerer },
+				correctAnswer: null,
+				answeredPlayers: {},
+				guesses: {},
+				roundStatus: 'waiting'
 			});
+
+			return { success: true };
+		} catch (error) {
+			console.error('Error starting next round:', error);
+			return fail(500, { error: 'Failed to start next round' });
+		}
+	},
+	endGame: async ({ params, cookies }) => {
+		const gameCode = params.gameCode?.toUpperCase();
+		if (!gameCode) return fail(400, { error: 'Game Code is required' });
+
+		try {
+			if (!adminDb) return fail(500, { error: 'Database not initialized' });
+			const gameRef = adminDb.ref(`gamecode/${gameCode}`);
+			await gameRef.remove();
+
+			cookies.delete('gameCode', { path: '/' });
+
+			throw redirect(303, '/');
+		} catch (error) {
+			if (isRedirect(error)) throw error;
+			console.error('Error ending game:', error);
+			return fail(500, { error: 'Failed to end game' });
 		}
 	}
 };
