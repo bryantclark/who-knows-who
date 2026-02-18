@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Header from './Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import './styles.css';
 	import { fade, fly } from 'svelte/transition';
@@ -27,8 +26,6 @@
 	</div>
 
 	<div class="relative z-10 flex flex-col min-h-screen">
-		<Header />
-
 		<main class="flex-grow container mx-auto px-4 py-8 md:py-16">
 			{@render children()}
 		</main>

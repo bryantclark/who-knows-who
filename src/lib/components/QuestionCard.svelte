@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
 	import { enhance } from '$app/forms';
+	import { browser } from '$app/environment';
 
 	let {
 		questions,
@@ -8,7 +9,8 @@
 		currentAnswererName,
 		hasAnswered,
 		playersCount,
-		answeredPlayersCount
+		answeredPlayersCount,
+		gameCode
 	} = $props<{
 		questions: string;
 		isAnswerer: boolean;
@@ -16,19 +18,42 @@
 		hasAnswered: boolean;
 		playersCount: number;
 		answeredPlayersCount: number;
+		gameCode: string;
 	}>();
 
 	const remaining = $derived(playersCount - answeredPlayersCount);
+	let copyStatus = $state('Copy Link');
+
+	const shareUrl = $derived(browser ? `${window.location.origin}/?gameCode=${gameCode}` : '');
+
+	function copyRoomLink() {
+		if (browser) {
+			navigator.clipboard.writeText(shareUrl);
+			copyStatus = 'Copied!';
+			setTimeout(() => (copyStatus = 'Copy Link'), 2000);
+		}
+	}
 </script>
 
 <div class="vibrant-card-premium p-1 md:p-2 relative overflow-hidden">
 	<div class="bg-dark-bg/20 backdrop-blur-2xl rounded-[2.3rem] p-8 md:p-12 space-y-12">
-		<div class="text-center space-y-4">
-			<div
-				class="inline-block px-4 py-1.5 bg-white/5 rounded-full border border-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500"
-			>
-				Transmission In Progress
+		<!-- Header: Game Code & Copy Link -->
+		<div class="flex flex-wrap justify-between items-center border-b border-white/5 pb-6">
+			<div class="flex items-center gap-4">
+				<div class="space-y-1">
+					<p class="text-[8px] font-black uppercase tracking-[0.3em] text-primary">Access Key</p>
+					<h3 class="text-2xl font-black font-outfit text-white tracking-[0.2em]">{gameCode}</h3>
+				</div>
+				<button
+					onclick={copyRoomLink}
+					class="mt-4 px-4 py-1.5 bg-white/5 border border-white/10 hover:bg-primary/20 hover:border-primary/50 transition-all rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white"
+				>
+					{copyStatus}
+				</button>
 			</div>
+		</div>
+
+		<div class="text-center space-y-4">
 			<h2
 				class="text-3xl md:text-5xl font-black font-outfit leading-tight text-white drop-shadow-sm"
 			>

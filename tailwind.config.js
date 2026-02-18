@@ -8,12 +8,12 @@ module.exports = {
 				outfit: ['Outfit', 'sans-serif']
 			},
 			colors: {
-				'dark-bg': '#030712', // Zinc 950
+				'dark-bg': '#020617', // Slate 950
 				surface: '#0f172a', // Slate 900
 				'surface-lighter': '#1e293b', // Slate 800
-				primary: '#6366f1', // Indigo 500
-				secondary: '#f43f5e', // Rose 500
-				accent: '#2dd4bf', // Teal 400
+				primary: '#f97316', // Orange 500
+				secondary: '#f59e0b', // Amber 500
+				accent: '#fbbf24', // Amber 400
 				success: '#10b981',
 				'glass-white': 'rgba(255, 255, 255, 0.03)',
 				'glass-border': 'rgba(255, 255, 255, 0.08)'

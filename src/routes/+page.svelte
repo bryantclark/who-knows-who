@@ -3,6 +3,7 @@
 	import { fade, fly, scale } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import SynergyMatrix from '../lib/components/SynergyMatrix.svelte';
 
 	let { data, form } = $props<{ data: any; form: any }>();
 
@@ -26,23 +27,35 @@
 
 <div class="max-w-5xl mx-auto px-6 py-12 md:py-24" in:fade={{ duration: 1000 }}>
 	<!-- Hero Section -->
-	<div class="text-center mb-20 space-y-6 relative">
+	<div class="text-center mb-16 space-y-6 relative">
+		<!-- Dynamic Background: Demo Synergy Matrix -->
+		<div
+			class="fixed inset-0 overflow-hidden pointer-events-none -z-50 opacity-40 flex items-center justify-center"
+		>
+			<div class="scale-[4] transform">
+				<SynergyMatrix demoMode={true} />
+			</div>
+			<div
+				class="absolute inset-0 bg-gradient-to-b from-dark-bg/80 via-transparent to-dark-bg/80"
+			></div>
+		</div>
+
 		<div
 			class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 blur-[120px] rounded-full animate-pulse-slow -z-10"
 		></div>
+
 		<h1
-			class="text-6xl md:text-9xl font-black font-outfit uppercase tracking-tighter leading-[0.9] text-white"
+			class="text-6xl md:text-8xl font-black font-outfit uppercase tracking-tighter leading-[0.9] text-white"
 			in:fly={{ y: 30, delay: 200, duration: 1000 }}
 		>
-			The Ultimate <br />
-			<span class="vibrant-gradient-text drop-shadow-glow">Connection</span> Test
+			Who Knows <br />
+			<span class="vibrant-gradient-text drop-shadow-glow">Who?</span>
 		</h1>
 		<p
-			class="text-lg md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed"
+			class="text-lg md:text-xl text-slate-400 font-medium max-w-xl mx-auto leading-relaxed"
 			in:fly={{ y: 20, delay: 400, duration: 1000 }}
 		>
-			Unlock the secrets of your squad. An AI-powered social trivia experience that proves exactly
-			how well you know each other.
+			Discover how well you truly know your friends. Join a room to test your connections.
 		</p>
 	</div>
 
@@ -182,7 +195,7 @@
 
 					<button
 						type="submit"
-						class="w-full bg-secondary hover:bg-rose-600 vibrant-btn-primary py-6 text-xl shadow-secondary/20 hover:shadow-secondary/40"
+						class="w-full bg-secondary hover:bg-orange-600 vibrant-btn-primary py-6 text-xl shadow-secondary/20 hover:shadow-secondary/40"
 						disabled={isJoining}
 					>
 						{isJoining ? 'Initializing...' : 'Launch Session'}
@@ -198,53 +211,6 @@
 					{form.error}
 				</div>
 			{/if}
-		</div>
-	</div>
-
-	<!-- Features Grid -->
-	<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 px-4">
-		<div
-			class="vibrant-card p-10 space-y-6 group hover:bg-primary/5 transition-colors duration-500"
-		>
-			<div
-				class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-3xl border border-primary/20 group-hover:scale-110 transition-transform duration-500"
-			>
-				🤖
-			</div>
-			<div class="space-y-2">
-				<h3 class="text-lg font-black uppercase tracking-wider text-white">Neural Engine</h3>
-				<p class="text-slate-400 text-sm leading-relaxed">
-					Powered by Gemini 1.5 Flash for nuanced understanding of friendship bonds.
-				</p>
-			</div>
-		</div>
-		<div
-			class="vibrant-card p-10 space-y-6 group hover:bg-secondary/5 transition-colors duration-500"
-		>
-			<div
-				class="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center text-3xl border border-secondary/20 group-hover:scale-110 transition-transform duration-500"
-			>
-				⚡️
-			</div>
-			<div class="space-y-2">
-				<h3 class="text-lg font-black uppercase tracking-wider text-white">Zero Latency</h3>
-				<p class="text-slate-400 text-sm leading-relaxed">
-					Real-time Firebase synchronization keeps the entire squad in perfect lockstep.
-				</p>
-			</div>
-		</div>
-		<div class="vibrant-card p-10 space-y-6 group hover:bg-accent/5 transition-colors duration-500">
-			<div
-				class="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-3xl border border-accent/20 group-hover:scale-110 transition-transform duration-500"
-			>
-				🎨
-			</div>
-			<div class="space-y-2">
-				<h3 class="text-lg font-black uppercase tracking-wider text-white">Elite UX</h3>
-				<p class="text-slate-400 text-sm leading-relaxed">
-					A premium glassmorphic interface designed for deep focus and maximum fun.
-				</p>
-			</div>
 		</div>
 	</div>
 </div>

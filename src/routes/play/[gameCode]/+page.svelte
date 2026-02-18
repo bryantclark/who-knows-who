@@ -3,12 +3,12 @@
 	import { ref, onValue } from 'firebase/database';
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { fade } from 'svelte/transition';
 	import { browser } from '$app/environment';
+	import { fade } from 'svelte/transition';
 
-	import SquadList from '$lib/components/SquadList.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import RoundResults from '$lib/components/RoundResults.svelte';
+	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
 
 	let { data, form } = $props<{ data: any; form: any }>();
 
@@ -46,16 +46,14 @@
 				></div>
 			</div>
 			<div class="space-y-2">
-				<p class="text-2xl font-black uppercase tracking-[0.4em] text-white">Synchronizing</p>
-				<p class="text-slate-500 font-medium uppercase tracking-widest text-xs">
-					Connecting to Neural Network...
-				</p>
+				<p class="text-2xl font-black uppercase tracking-[0.4em] text-white">Syncing</p>
+				<p class="text-slate-500 font-medium uppercase tracking-widest text-xs">Connecting...</p>
 			</div>
 		</div>
 	{:else}
-		<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
-			<!-- Main Area: Action & Intel (Top on mobile) -->
-			<div class="lg:col-span-8 order-1 lg:order-2">
+		<div class="space-y-12">
+			<!-- Main Action Area -->
+			<div class="max-w-4xl mx-auto w-full relative">
 				{#if isRoundComplete}
 					<RoundResults
 						questions={gameData.questions}
@@ -71,28 +69,28 @@
 						{hasAnswered}
 						playersCount={players.length}
 						answeredPlayersCount={answeredPlayers.length}
+						gameCode={data.gameCode}
 					/>
 				{/if}
-			</div>
 
-			<!-- Side Panel: Status & Players (Bottom on mobile) -->
-			<div class="lg:col-span-4 space-y-8 sticky top-8 order-2 lg:order-1">
-				<SquadList
-					{players}
-					{answeredPlayers}
-					currentPlayerName={data.playerName}
-					gameCode={data.gameCode}
-				/>
-
-				<div class="pt-4">
-					<form method="POST" action="?/endGame" use:enhance>
-						<button
-							class="w-full py-4 text-slate-500 text-[10px] font-black uppercase tracking-[0.3em] hover:text-red-500 hover:bg-red-500/5 rounded-2xl transition-all duration-500 border border-transparent hover:border-red-500/10"
-						>
-							Terminate Session
-						</button>
-					</form>
+				<div class="pt-4 max-w-5xl mx-auto w-full">
+					<SynergyMatrix
+						{players}
+						{answeredPlayers}
+						gameCode={data.gameCode}
+						currentPlayerName={data.playerName}
+						targetPlayerName={gameData.currentAnswerer?.name}
+					/>
 				</div>
+
+				<!-- Simplified Exit -->
+				<form method="POST" action="?/endGame" use:enhance class="fixed top-6 left-6 z-50">
+					<button
+						class="px-5 py-2 bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+					>
+						Leave
+					</button>
+				</form>
 			</div>
 		</div>
 	{/if}

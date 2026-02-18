@@ -1,10 +1,24 @@
 <script lang="ts">
 	import { db } from '../../firebase/firebase';
 	import { onValue, ref } from 'firebase/database';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	let { gameCode } = $props<{ gameCode: string }>();
+	let {
+		players = [],
+		answeredPlayers = [],
+		gameCode,
+		currentPlayerName,
+		targetPlayerName,
+		demoMode = false
+	} = $props<{
+		players?: string[];
+		answeredPlayers?: string[];
+		gameCode?: string;
+		currentPlayerName?: string;
+		targetPlayerName?: string;
+		demoMode?: boolean;
+	}>();
 
 	interface ScoreData {
 		[playerID: string]: {
@@ -15,152 +29,415 @@
 	}
 
 	let scoreData = $state<ScoreData>({});
-	let players = $derived(Object.keys(scoreData));
+	let hoveredPlayer = $state<string | null>(null);
 
-	onMount(() => {
-		const scoresRef = ref(db, `gamecode/${gameCode}/scores`);
-		const unsubscribe = onValue(scoresRef, (snapshot) => {
-			if (snapshot.exists()) {
-				scoreData = snapshot.val();
+	// Demo Mode Data
+	const demoPlayers = [
+		'A',
+		'B',
+		'C',
+		'D',
+		'E',
+		'F',
+		'G',
+		'H',
+		'I',
+		'J',
+		'K',
+		'L',
+		'M',
+		'N',
+		'O',
+		'P',
+		'Q',
+		'R',
+		'S',
+		'T',
+		'U',
+		'V',
+		'W',
+		'X',
+		'Y',
+		'Z',
+		'AA',
+		'AB',
+		'AC',
+		'AD'
+	];
+	let demoScores = $state<ScoreData>({});
+
+	// Use real props or demo data
+	const activePlayers = $derived(demoMode ? demoPlayers : players);
+	const activeScoreData = $derived(demoMode ? demoScores : scoreData);
+	// Always show data in demo mode
+	const hasData = $derived(demoMode || Object.keys(scoreData).length > 0);
+
+	// SVG Constants
+	// Massive scale for maximum impact
+	const size = 1000;
+	const center = size / 2;
+	// Large radius for spacious node placement
+	const radius = 400;
+
+	// Adaptive Sizing
+	const isLargeGroup = $derived(activePlayers.length > 6);
+	const nodeRadius = $derived(isLargeGroup ? 25 : 35);
+	const labelOffset = $derived(isLargeGroup ? 45 : 60);
+
+	const nodePositions = $derived(
+		activePlayers.map((name: string, i: number) => {
+			const angle = (i / activePlayers.length) * 2 * Math.PI - Math.PI / 2;
+			return {
+				name,
+				x: center + radius * Math.cos(angle),
+				y: center + radius * Math.sin(angle),
+				angle
+			};
+		})
+	);
+
+	// Get unique pairs for rendering average connections
+	const uniquePairs = $derived.by(() => {
+		const pairs = [];
+		for (let i = 0; i < nodePositions.length; i++) {
+			for (let j = i + 1; j < nodePositions.length; j++) {
+				pairs.push({ start: nodePositions[i], end: nodePositions[j] });
 			}
-		});
-		return () => unsubscribe();
+		}
+		return pairs;
 	});
 
-	function getSynergyColor(score: number) {
-		if (score >= 80) return 'rgba(16, 185, 129, 0.2)'; // Success
-		if (score >= 50) return 'rgba(99, 102, 241, 0.2)'; // Primary
-		if (score > 0) return 'rgba(244, 63, 94, 0.1)'; // Secondary
-		return 'rgba(255, 255, 255, 0.02)';
+	function getPath(start: { x: number; y: number }, end: { x: number; y: number }) {
+		return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
 	}
 
-	function getTextColor(score: number) {
-		if (score >= 80) return 'text-success';
-		if (score >= 50) return 'text-primary';
-		if (score > 0) return 'text-secondary';
-		return 'text-white/10';
+	function getAverageScore(p1: string, p2: string) {
+		const s1 = activeScoreData[p1]?.[p2]?.accuracyPercentage || 0;
+		const s2 = activeScoreData[p2]?.[p1]?.accuracyPercentage || 0;
+		return (s1 + s2) / 2;
 	}
+
+	function interpolateColor(score: number) {
+		let r, g, b;
+		if (score <= 50) {
+			// Red to Orange
+			const t = score / 50;
+			r = Math.round(239 + (249 - 239) * t);
+			g = Math.round(68 + (115 - 68) * t);
+			b = Math.round(68 + (22 - 68) * t);
+		} else {
+			// Orange to Green
+			const t = (score - 50) / 50;
+			r = Math.round(249 + (16 - 249) * t);
+			g = Math.round(115 + (185 - 115) * t);
+			b = Math.round(22 + (129 - 22) * t);
+		}
+		return `rgb(${r}, ${g}, ${b})`;
+	}
+
+	function getConnectionOpacity(score: number, isHighlighted: boolean) {
+		if (hoveredPlayer && !isHighlighted) return 0.05;
+		const baseOpacity = isLargeGroup ? 0.1 : 0.2;
+		return Math.max(baseOpacity, (score / 100) * 0.5);
+	}
+
+	onMount(() => {
+		if (demoMode) {
+			// Generate random scores for demo
+			const newScores: ScoreData = {};
+			demoPlayers.forEach((p1) => {
+				newScores[p1] = {};
+				demoPlayers.forEach((p2) => {
+					if (p1 !== p2) {
+						// Bias towards active connections for visual interest
+						newScores[p1][p2] = {
+							accuracyPercentage: Math.floor(Math.random() * 100)
+						};
+					}
+				});
+			});
+			demoScores = newScores;
+
+			// Auto-hover randomly for effect
+			const interval = setInterval(() => {
+				const randomIdx = Math.floor(Math.random() * demoPlayers.length);
+				hoveredPlayer = demoPlayers[randomIdx];
+			}, 3000);
+
+			return () => clearInterval(interval);
+		} else if (gameCode) {
+			const scoresRef = ref(db, `gamecode/${gameCode}/scores`);
+			const unsubscribe = onValue(scoresRef, (snapshot) => {
+				if (snapshot.exists()) {
+					scoreData = snapshot.val();
+				}
+			});
+			return () => unsubscribe();
+		}
+	});
 </script>
 
-<div class="vibrant-card-premium p-1 md:p-2 bg-gradient-to-br from-white/5 to-transparent">
-	<div class="bg-dark-bg/80 backdrop-blur-3xl rounded-[2.3rem] p-8 md:p-12 space-y-10">
-		<div class="space-y-2 text-center">
-			<h2 class="text-[10px] font-black uppercase tracking-[0.5em] text-primary">
-				Neural Link Analysis
-			</h2>
-			<p class="text-white font-outfit font-black text-2xl uppercase tracking-tighter">
-				Squad Synergy Matrix
+<div class="relative w-full flex flex-col items-center">
+	{#if !hasData}
+		<div class="text-center space-y-4 py-12" in:fade>
+			<p class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">
+				Waiting for data...
 			</p>
+			<div class="flex justify-center gap-2">
+				{#each activePlayers as player}
+					<div
+						class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-black text-slate-400"
+					>
+						{player[0].toUpperCase()}
+					</div>
+				{/each}
+			</div>
 		</div>
-
-		{#if players.length === 0}
-			<div
-				class="py-20 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]"
+	{:else}
+		<div class="relative w-full py-4 flex justify-center" in:fade>
+			<!-- Graph: Allow full width scaling -->
+			<svg
+				viewBox="0 0 {size} {size}"
+				class="w-full max-w-[1200px] h-auto drop-shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-visible"
 			>
-				<p class="text-slate-600 font-black uppercase tracking-widest text-xs">
-					Awaiting connection data...
-				</p>
-			</div>
-		{:else}
-			<div class="overflow-x-auto custom-scrollbar pb-4" in:fade>
-				<table class="w-full border-separate border-spacing-2">
-					<thead>
-						<tr>
-							<th class="p-4"></th>
-							{#each players as player}
-								<th class="p-4 text-center">
-									<div
-										class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto"
-									>
-										<span class="text-xs font-black text-slate-400">{player[0].toUpperCase()}</span>
-									</div>
-									<p
-										class="text-[8px] font-black uppercase tracking-widest text-slate-500 mt-2 truncate max-w-[60px]"
-									>
-										{player}
-									</p>
-								</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each players as guesser}
-							<tr>
-								<td class="p-4 text-right">
-									<p
-										class="text-[8px] font-black uppercase tracking-widest text-slate-500 truncate max-w-[80px]"
-									>
-										{guesser}
-									</p>
-								</td>
-								{#each players as target}
-									<td class="p-1">
-										<div
-											class="aspect-square w-16 md:w-20 rounded-2xl border flex flex-col items-center justify-center transition-all duration-700 relative overflow-hidden group {guesser ===
-											target
-												? 'border-white/5 opacity-20'
-												: 'border-white/10 hover:border-white/30'}"
-											style="background: {guesser === target
-												? 'transparent'
-												: getSynergyColor(scoreData[guesser]?.[target]?.accuracyPercentage || 0)}"
-										>
-											{#if guesser !== target}
-												<span
-													class="text-lg md:text-xl font-black font-outfit {getTextColor(
-														scoreData[guesser]?.[target]?.accuracyPercentage || 0
-													)}"
-												>
-													{Math.round(scoreData[guesser]?.[target]?.accuracyPercentage || 0)}%
-												</span>
-												<div
-													class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"
-												></div>
-											{:else}
-												<div class="w-1.5 h-1.5 bg-white/20 rounded-full"></div>
-											{/if}
-										</div>
-									</td>
-								{/each}
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+				<!-- Connections -->
+				{#each uniquePairs as pair}
+					{@const score = getAverageScore(pair.start.name, pair.end.name)}
+					{@const color = interpolateColor(score)}
+					{@const isHighlighted =
+						hoveredPlayer === pair.start.name || hoveredPlayer === pair.end.name}
+					{@const path = getPath(pair.start, pair.end)}
 
-			<div class="flex flex-wrap justify-center gap-6 pt-4 border-t border-white/5">
-				<div class="flex items-center gap-2">
-					<div class="w-2.5 h-2.5 rounded-full bg-success/40 border border-success/60"></div>
-					<span class="text-[8px] font-black uppercase tracking-widest text-slate-500"
-						>Mind Reader (80%+)</span
+					<!-- Base Line -->
+					<path
+						d={path}
+						fill="none"
+						stroke={color}
+						stroke-width={isLargeGroup ? 1.5 : 2.5}
+						stroke-opacity={getConnectionOpacity(score, isHighlighted)}
+						stroke-linecap="round"
+						class="transition-all duration-500"
+					/>
+
+					<!-- Hover Particles (Bidirectional) -->
+					{#if isHighlighted}
+						{@const scoreAB =
+							activeScoreData[pair.start.name]?.[pair.end.name]?.accuracyPercentage || 0}
+						{@const scoreBA =
+							activeScoreData[pair.end.name]?.[pair.start.name]?.accuracyPercentage || 0}
+
+						<!-- Flow A -> B (Color based on A's accuracy on B) -->
+						<circle r="3" fill={interpolateColor(scoreAB)}>
+							<animateMotion
+								dur="{1.5}s"
+								repeatCount="indefinite"
+								{path}
+								keyPoints="0;1"
+								keyTimes="0;1"
+							/>
+						</circle>
+						<!-- Flow B -> A (Color based on B's accuracy on A) -->
+						<circle r="3" fill={interpolateColor(scoreBA)}>
+							<animateMotion
+								dur="{1.5}s"
+								repeatCount="indefinite"
+								{path}
+								keyPoints="1;0"
+								keyTimes="0;1"
+							/>
+						</circle>
+					{/if}
+				{/each}
+
+				<!-- Player Nodes -->
+				{#each nodePositions as node}
+					{@const labelRadius = labelOffset}
+					{@const labelX = center + (radius + labelRadius) * Math.cos(node.angle)}
+					{@const labelY = center + (radius + labelRadius) * Math.sin(node.angle)}
+					{@const isTarget = node.name === targetPlayerName}
+					{@const isAnswered = answeredPlayers?.includes(node.name)}
+
+					<!-- svelte-ignore a11y_mouse_events_have_key_events -->
+					<g
+						class="cursor-pointer group"
+						onmouseover={() => (hoveredPlayer = node.name)}
+						onmouseout={() => (hoveredPlayer = null)}
 					>
-				</div>
-				<div class="flex items-center gap-2">
-					<div class="w-2.5 h-2.5 rounded-full bg-primary/40 border border-primary/60"></div>
-					<span class="text-[8px] font-black uppercase tracking-widest text-slate-500"
-						>True Friend (50%+)</span
+						<!-- Target Focus Ring -->
+						{#if isTarget}
+							<circle cx={node.x} cy={node.y} r={nodeRadius + 15} fill="#f97316" fill-opacity="0.1">
+								<animate
+									attributeName="r"
+									values="{nodeRadius + 12};{nodeRadius + 20};{nodeRadius + 12}"
+									dur="2s"
+									repeatCount="indefinite"
+								/>
+								<animate
+									attributeName="fill-opacity"
+									values="0.15;0.05;0.15"
+									dur="2s"
+									repeatCount="indefinite"
+								/>
+							</circle>
+						{/if}
+
+						<!-- Hover Glow -->
+						{#if hoveredPlayer === node.name}
+							<circle
+								cx={node.x}
+								cy={node.y}
+								r={nodeRadius + 10}
+								fill="white"
+								fill-opacity="0.1"
+								transition:fade
+							/>
+						{/if}
+
+						<!-- Node Body -->
+						<circle
+							cx={node.x}
+							cy={node.y}
+							r={nodeRadius}
+							class="transition-all duration-300 {isTarget
+								? 'fill-dark-bg stroke-primary stroke-[3]'
+								: 'fill-dark-bg stroke-white/20 group-hover:stroke-primary group-hover:stroke-[2]'}"
+						/>
+
+						<!-- Initial -->
+						<text
+							x={node.x}
+							y={node.y}
+							dy=".32em"
+							text-anchor="middle"
+							class="{isTarget ? 'fill-primary' : 'fill-white'} {isLargeGroup
+								? 'text-[12px]'
+								: 'text-[16px]'} font-black font-outfit pointer-events-none"
+						>
+							{node.name[0].toUpperCase()}
+						</text>
+
+						<!-- Sync Indicator -->
+						{#if isAnswered}
+							<circle
+								cx={node.x + nodeRadius * 0.7}
+								cy={node.y - nodeRadius * 0.7}
+								r={isLargeGroup ? 6 : 7}
+								fill="#10b981"
+								class="stroke-dark-bg"
+								stroke-width="2"
+							/>
+							<path
+								d="M {node.x + nodeRadius * 0.7 - 2} {node.y - nodeRadius * 0.7} l 1.5 1.5 l 3 -3"
+								fill="none"
+								stroke="white"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+						{/if}
+
+						<!-- Label -->
+						<text
+							x={labelX}
+							y={labelY}
+							text-anchor={Math.cos(node.angle) > 0 ? 'start' : 'end'}
+							class="{isTarget ? 'fill-primary' : 'fill-slate-500'} {isLargeGroup
+								? 'text-[8px]'
+								: 'text-[10px]'} font-black uppercase tracking-widest pointer-events-none transition-all duration-300 {hoveredPlayer ===
+							node.name
+								? 'fill-white'
+								: ''}"
+						>
+							{node.name}
+							{#if node.name === currentPlayerName}
+								<tspan fill="#f97316" dx="5">(YOU)</tspan>
+							{/if}
+						</text>
+					</g>
+				{/each}
+			</svg>
+
+			<!-- Detailed Overlay (Corner Positioned) -->
+			<!-- Only show overlay if NOT in demo mode, or maybe show it for effect? Let's hide it for demo mode to keep it ambient. -->
+			{#if hoveredPlayer && !demoMode}
+				<div
+					class="fixed bottom-4 inset-x-4 md:absolute md:top-0 md:right-0 md:bottom-auto md:left-auto pointer-events-none flex justify-center md:block z-50"
+					transition:fade={{ duration: 200 }}
+				>
+					<div
+						class="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-2xl min-w-[280px] w-full max-w-sm"
 					>
+						<div class="flex items-center gap-3 mb-4 border-b border-white/5 pb-4">
+							<div
+								class="w-10 h-10 rounded-xl bg-surface-lighter border border-white/10 flex items-center justify-center text-sm font-black text-white shadow-lg"
+							>
+								{hoveredPlayer[0].toUpperCase()}
+							</div>
+							<div>
+								<h4 class="text-lg font-black text-white leading-none tracking-wide">
+									{hoveredPlayer}
+								</h4>
+								<p class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">
+									Relationship Data
+								</p>
+							</div>
+						</div>
+
+						<div class="space-y-1.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
+							{#each activePlayers.filter((p: string) => p !== hoveredPlayer) as target}
+								{@const myGuess = Math.round(
+									activeScoreData[hoveredPlayer]?.[target]?.accuracyPercentage || 0
+								)}
+								{@const theirGuess = Math.round(
+									activeScoreData[target]?.[hoveredPlayer]?.accuracyPercentage || 0
+								)}
+								<div class="flex items-center justify-between py-2 px-3 rounded-xl bg-white/[0.03]">
+									<span class="text-xs font-bold text-slate-300 w-20 truncate">{target}</span>
+
+									<div class="flex items-center gap-6">
+										<!-- Knows Them -->
+										<div class="flex flex-col items-end">
+											<span class="text-xs font-black" style="color: {interpolateColor(myGuess)}"
+												>{myGuess}%</span
+											>
+											<span class="text-[6px] uppercase tracking-wider text-slate-600 font-bold"
+												>Knows Them</span
+											>
+										</div>
+
+										<!-- Divider -->
+										<div class="w-px h-6 bg-white/10"></div>
+
+										<!-- Known By -->
+										<div class="flex flex-col items-start">
+											<span class="text-xs font-black" style="color: {interpolateColor(theirGuess)}"
+												>{theirGuess}%</span
+											>
+											<span class="text-[6px] uppercase tracking-wider text-slate-600 font-bold"
+												>Known By</span
+											>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
 				</div>
-				<div class="flex items-center gap-2">
-					<div class="w-2.5 h-2.5 rounded-full bg-secondary/20 border border-secondary/40"></div>
-					<span class="text-[8px] font-black uppercase tracking-widest text-slate-500"
-						>Stranger (0%+)</span
-					>
-				</div>
-			</div>
-		{/if}
-	</div>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style>
 	.custom-scrollbar::-webkit-scrollbar {
-		height: 4px;
+		width: 4px;
 	}
 	.custom-scrollbar::-webkit-scrollbar-track {
 		background: rgba(255, 255, 255, 0.02);
 		border-radius: 10px;
 	}
 	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(255, 255, 255, 0.1);
 		border-radius: 10px;
 	}
 </style>
