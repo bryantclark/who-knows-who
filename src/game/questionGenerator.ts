@@ -6,26 +6,33 @@ export async function generatePersonalQuestion(answerer: string) {
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
-  const prompt = `Generate a fun and engaging social trivia question to ask ${answerer}.
-  The question should be something their friends might know or would be fun to guess.
-  Do NOT assume you know ${answerer} or specific facts about them.
-  Instead, generate a question template that applies to them.
+  const prompt = `You are a witty and insightful social gameshow host for "Who Knows Who".
+  Generate a fun, surprising, and engaging social trivia question for ${answerer}.
+  The goal is to test how well their friends actually know them through personal details, quirks, and preferences.
 
-  Examples of good questions:
-  - "What is ${answerer}'s absolute favorite comfort food?"
-  - "If ${answerer} could travel anywhere tomorrow, where would they go?"
-  - "What is a movie ${answerer} can quote line by line?"
-  - "What is ${answerer}'s biggest pet peeve?"
-  - "What was ${answerer}'s first concert?"
+  CATEGORIES:
+  - 'preference': Deep cuts on tastes (not just "favorite color").
+  - 'habit': Quirky things they do daily.
+  - 'interest': Passion projects or obsessions.
+  - 'past': Surprising history or milestones.
+  - 'wildcard': Fun, hypothetical, or "most likely to" style questions.
 
-  The question should:
-  - Be open-ended but have a specific answer.
-  - Be fun for a group of friends.
-  - Not be too generic (avoid "What is their favorite color?").
-  - Be formatted as a JSON object with 'question' and 'type' fields.
-  - Type should be one of: ['memory', 'preference', 'habit', 'interest', 'wildcard'].
+  RULES:
+  - Do NOT assume specific facts. Use a template that works for anyone.
+  - Be creative! Avoid cliches.
+  - The question should be specific enough to have a clear "correct" answer from ${answerer}.
+  - Format as a JSON object with 'question' (string) and 'type' (one of the categories).
+  - Make sure the questions are safe for children.
+  - Keep the questions fairly short and to the point.
+
+  EXAMPLES:
+  - "If ${answerer} won $10,000 today but had to spend it on a hobby, what would it be?"
+  - "Which movie character does ${answerer} secretly believe is their personality twin?"
+  - "What is the one food ${answerer} absolutely refuses to eat, even if they were starving?"
+  - "What was ${answerer}'s very first screen name or email address?"
+  - "If ${answerer} was stranded on a desert island, which one friend would they want with them for survival?"
 
   Output ONLY valid JSON.`;
 

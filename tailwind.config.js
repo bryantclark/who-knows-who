@@ -8,16 +8,24 @@ module.exports = {
 				outfit: ['Outfit', 'sans-serif']
 			},
 			colors: {
-				'dark-bg': '#0b0e14',
-				surface: '#161b22',
-				primary: '#8b5cf6',
-				secondary: '#ec4899',
-				accent: '#06b6d4',
-				success: '#10b981'
+				'dark-bg': '#030712', // Zinc 950
+				surface: '#0f172a', // Slate 900
+				'surface-lighter': '#1e293b', // Slate 800
+				primary: '#6366f1', // Indigo 500
+				secondary: '#f43f5e', // Rose 500
+				accent: '#2dd4bf', // Teal 400
+				success: '#10b981',
+				'glass-white': 'rgba(255, 255, 255, 0.03)',
+				'glass-border': 'rgba(255, 255, 255, 0.08)'
 			},
 			dropShadow: {
-				'neon-primary': '0 0 8px rgba(139,92,246,0.5)',
-				'neon-secondary': '0 0 8px rgba(236,72,153,0.5)'
+				'neon-primary': '0 0 12px rgba(99, 102, 241, 0.4)',
+				'neon-secondary': '0 0 12px rgba(244, 63, 94, 0.4)',
+				glow: '0 0 20px rgba(99, 102, 241, 0.2)'
+			},
+			boxShadow: {
+				'premium-inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+				'glass-depth': '0 8px 32px 0 rgba(0, 0, 0, 0.8)'
 			}
 		}
 	},

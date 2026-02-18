@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Header from './Header.svelte';
+	import Footer from '$lib/components/Footer.svelte';
 	import './styles.css';
 	import { fade, fly } from 'svelte/transition';
 
@@ -32,17 +33,7 @@
 			{@render children()}
 		</main>
 
-		<footer class="py-12 border-t border-white/5 bg-black/20">
-			<div class="container mx-auto px-4 text-center">
-				<p class="text-slate-500 font-medium tracking-wide">
-					Built with <span class="text-secondary">♥</span> and
-					<a
-						href="https://kit.svelte.dev"
-						class="text-primary hover:neon-text-primary transition-all">SvelteKit</a
-					>
-				</p>
-			</div>
-		</footer>
+		<Footer />
 	</div>
 </div>
 

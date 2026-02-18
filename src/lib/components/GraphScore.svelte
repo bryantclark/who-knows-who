@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import Chart from 'chart.js/auto';
-	import { db } from '../firebase/firebase';
+	import { db } from '../../firebase/firebase';
 	import { onValue, ref } from 'firebase/database';
 
 	interface PlayerKnowledgeScores {
@@ -31,12 +31,12 @@
 
 		const datasets = players.map((playerID, index) => {
 			const colors = [
-				'#8b5cf6', // primary
-				'#ec4899', // secondary
-				'#06b6d4', // accent
+				'#6366f1', // primary (indigo)
+				'#f43f5e', // secondary (rose)
+				'#2dd4bf', // accent (teal)
 				'#10b981', // success
 				'#f59e0b', // warning
-				'#6366f1'
+				'#8b5cf6' // violet
 			];
 			const color = colors[index % colors.length];
 
