@@ -13,7 +13,7 @@ const config = {
 				if (path === '/contact' && message.includes('Cannot prerender pages with actions')) {
 					return;
 				}
-				
+
 				// Otherwise, throw the error
 				throw new Error(message);
 			}

@@ -1,2 +1,394 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["../nodes/0.DumlcDdq.js","../chunks/DrVC7uez.js","../chunks/v5j2BDPd.js","../chunks/Ss1HFBS8.js","../chunks/Ba_0m-YY.js","../chunks/BoGVLIPu.js","../chunks/CWB0CLVX.js","../assets/0.CMX89UUN.css","../nodes/1.xKk6hVVN.js","../chunks/BX6FIy57.js","../chunks/p-LGRBSD.js","../nodes/2.aqFhjnjP.js","../chunks/Ct5jITvR.js","../chunks/D9STwuJp.js","../assets/GraphScore.B-cvXMYa.css","../nodes/3.C7LN2MOB.js","../nodes/4.BEPRWQ6M.js","../assets/4.shmkUq-M.css"])))=>i.map(i=>d[i]);
-import{h as q,aa as Q,a9 as W,ab as G,l as O,F as H,k as d,aQ as X,d as Y,m as Z,Q as z,H as J,I as K,Z as $,aR as x,ak as ee,R as k,X as te,U as re,V as se,W as ae,aS as S,T as ne}from"../chunks/v5j2BDPd.js";import{h as oe,m as ce,u as ie,s as le}from"../chunks/BX6FIy57.js";import{f as D,a as E,c as A,t as ue}from"../chunks/DrVC7uez.js";import{B as me,i as L,b as T}from"../chunks/Ct5jITvR.js";import{p as C}from"../chunks/Ba_0m-YY.js";function j(n,e,s){q&&Q();var i=new me(n);W(()=>{var o=e()??null;i.ensure(o,o&&(r=>s(r,o)))},G)}function de(n){return class extends fe{constructor(e){super({component:n,...e})}}}class fe{#t;#e;constructor(e){var s=new Map,i=(r,t)=>{var a=Z(t,!1,!1);return s.set(r,a),a};const o=new Proxy({...e.props||{},$$events:{}},{get(r,t){return d(s.get(t)??i(t,Reflect.get(r,t)))},has(r,t){return t===H?!0:(d(s.get(t)??i(t,Reflect.get(r,t))),Reflect.has(r,t))},set(r,t,a){return O(s.get(t)??i(t,a),a),Reflect.set(r,t,a)}});this.#e=(e.hydrate?oe:ce)(e.component,{target:e.target,anchor:e.anchor,props:o,context:e.context,intro:e.intro??!1,recover:e.recover}),(!e?.props?.$$host||e.sync===!1)&&X(),this.#t=o.$$events;for(const r of Object.keys(this.#e))r==="$set"||r==="$destroy"||r==="$on"||Y(this,r,{get(){return this.#e[r]},set(t){this.#e[r]=t},enumerable:!0});this.#e.$set=r=>{Object.assign(o,r)},this.#e.$destroy=()=>{ie(this.#e)}}$set(e){this.#e.$set(e)}$on(e,s){this.#t[e]=this.#t[e]||[];const i=(...o)=>s.call(this,...o);return this.#t[e].push(i),()=>{this.#t[e]=this.#t[e].filter(o=>o!==i)}}$destroy(){this.#e.$destroy()}}const he="modulepreload",_e=function(n,e){return new URL(n,e).href},V={},R=function(e,s,i){let o=Promise.resolve();if(s&&s.length>0){let w=function(l){return Promise.all(l.map(m=>Promise.resolve(m).then(f=>({status:"fulfilled",value:f}),f=>({status:"rejected",reason:f}))))};const t=document.getElementsByTagName("link"),a=document.querySelector("meta[property=csp-nonce]"),p=a?.nonce||a?.getAttribute("nonce");o=w(s.map(l=>{if(l=_e(l,i),l in V)return;V[l]=!0;const m=l.endsWith(".css"),f=m?'[rel="stylesheet"]':"";if(i)for(let h=t.length-1;h>=0;h--){const c=t[h];if(c.href===l&&(!m||c.rel==="stylesheet"))return}else if(document.querySelector(`link[href="${l}"]${f}`))return;const u=document.createElement("link");if(u.rel=m?"stylesheet":he,m||(u.as="script"),u.crossOrigin="",u.href=l,p&&u.setAttribute("nonce",p),document.head.appendChild(u),m)return new Promise((h,c)=>{u.addEventListener("load",h),u.addEventListener("error",()=>c(new Error(`Unable to preload CSS for ${l}`)))})}))}function r(t){const a=new Event("vite:preloadError",{cancelable:!0});if(a.payload=t,window.dispatchEvent(a),!a.defaultPrevented)throw t}return o.then(t=>{for(const a of t||[])a.status==="rejected"&&r(a.reason);return e().catch(r)})},Oe={};var ve=D('<div id="svelte-announcer" aria-live="assertive" aria-atomic="true" style="position: absolute; left: 0; top: 0; clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap; width: 1px; height: 1px"><!></div>'),ge=D("<!> <!>",1);function ye(n,e){z(e,!0);let s=C(e,"components",23,()=>[]),i=C(e,"data_0",3,null),o=C(e,"data_1",3,null);J(()=>e.stores.page.set(e.page)),K(()=>{e.stores,e.page,e.constructors,s(),e.form,i(),o(),e.stores.page.notify()});let r=x(!1),t=x(!1),a=x(null);$(()=>{const c=e.stores.page.subscribe(()=>{d(r)&&(O(t,!0),ee().then(()=>{O(a,document.title||"untitled page",!0)}))});return O(r,!0),c});const p=S(()=>e.constructors[1]);var w=ge(),l=k(w);{var m=c=>{const _=S(()=>e.constructors[0]);var v=A(),b=k(v);j(b,()=>d(_),(g,y)=>{T(y(g,{get data(){return i()},get form(){return e.form},get params(){return e.page.params},children:(P,be)=>{var I=A(),M=k(I);j(M,()=>d(p),(B,F)=>{T(F(B,{get data(){return o()},get form(){return e.form},get params(){return e.page.params}}),U=>s()[1]=U,()=>s()?.[1])}),E(P,I)},$$slots:{default:!0}}),P=>s()[0]=P,()=>s()?.[0])}),E(c,v)},f=c=>{const _=S(()=>e.constructors[0]);var v=A(),b=k(v);j(b,()=>d(_),(g,y)=>{T(y(g,{get data(){return i()},get form(){return e.form},get params(){return e.page.params}}),P=>s()[0]=P,()=>s()?.[0])}),E(c,v)};L(l,c=>{e.constructors[1]?c(m):c(f,!1)})}var u=te(l,2);{var h=c=>{var _=ve(),v=se(_);{var b=g=>{var y=ue();ne(()=>le(y,d(a))),E(g,y)};L(v,g=>{d(t)&&g(b)})}ae(_),E(c,_)};L(u,c=>{d(r)&&c(h)})}E(n,w),re()}const xe=de(ye),Se=[()=>R(()=>import("../nodes/0.DumlcDdq.js"),__vite__mapDeps([0,1,2,3,4,5,6,7]),import.meta.url),()=>R(()=>import("../nodes/1.xKk6hVVN.js"),__vite__mapDeps([8,1,2,3,9,10,5]),import.meta.url),()=>R(()=>import("../nodes/2.aqFhjnjP.js"),__vite__mapDeps([11,1,2,3,9,10,12,6,5,13,4,14]),import.meta.url),()=>R(()=>import("../nodes/3.C7LN2MOB.js"),__vite__mapDeps([15,2,1,3,10,5]),import.meta.url),()=>R(()=>import("../nodes/4.BEPRWQ6M.js"),__vite__mapDeps([16,1,2,3,9,10,12,4,5,13,14,17]),import.meta.url)],Ae=[0],Le={"/":[2],"/how-to-play":[3],"/play/[gameCode]":[-5]},N={handleError:(({error:n})=>{console.error(n)}),reroute:(()=>{}),transport:{}},Ee=Object.fromEntries(Object.entries(N.transport).map(([n,e])=>[n,e.decode])),Te=Object.fromEntries(Object.entries(N.transport).map(([n,e])=>[n,e.encode])),Ce=!1,je=(n,e)=>Ee[n](e);export{je as decode,Ee as decoders,Le as dictionary,Te as encoders,Ce as hash,N as hooks,Oe as matchers,Se as nodes,xe as root,Ae as server_loads};
+const __vite__mapDeps = (
+	i,
+	m = __vite__mapDeps,
+	d = m.f ||
+		(m.f = [
+			'../nodes/0.DumlcDdq.js',
+			'../chunks/DrVC7uez.js',
+			'../chunks/v5j2BDPd.js',
+			'../chunks/Ss1HFBS8.js',
+			'../chunks/Ba_0m-YY.js',
+			'../chunks/BoGVLIPu.js',
+			'../chunks/CWB0CLVX.js',
+			'../assets/0.CMX89UUN.css',
+			'../nodes/1.xKk6hVVN.js',
+			'../chunks/BX6FIy57.js',
+			'../chunks/p-LGRBSD.js',
+			'../nodes/2.aqFhjnjP.js',
+			'../chunks/Ct5jITvR.js',
+			'../chunks/D9STwuJp.js',
+			'../assets/GraphScore.B-cvXMYa.css',
+			'../nodes/3.C7LN2MOB.js',
+			'../nodes/4.BEPRWQ6M.js',
+			'../assets/4.shmkUq-M.css'
+		])
+) => i.map((i) => d[i]);
+import {
+	h as q,
+	aa as Q,
+	a9 as W,
+	ab as G,
+	l as O,
+	F as H,
+	k as d,
+	aQ as X,
+	d as Y,
+	m as Z,
+	Q as z,
+	H as J,
+	I as K,
+	Z as $,
+	aR as x,
+	ak as ee,
+	R as k,
+	X as te,
+	U as re,
+	V as se,
+	W as ae,
+	aS as S,
+	T as ne
+} from '../chunks/v5j2BDPd.js';
+import { h as oe, m as ce, u as ie, s as le } from '../chunks/BX6FIy57.js';
+import { f as D, a as E, c as A, t as ue } from '../chunks/DrVC7uez.js';
+import { B as me, i as L, b as T } from '../chunks/Ct5jITvR.js';
+import { p as C } from '../chunks/Ba_0m-YY.js';
+function j(n, e, s) {
+	q && Q();
+	var i = new me(n);
+	W(() => {
+		var o = e() ?? null;
+		i.ensure(o, o && ((r) => s(r, o)));
+	}, G);
+}
+function de(n) {
+	return class extends fe {
+		constructor(e) {
+			super({ component: n, ...e });
+		}
+	};
+}
+class fe {
+	#t;
+	#e;
+	constructor(e) {
+		var s = new Map(),
+			i = (r, t) => {
+				var a = Z(t, !1, !1);
+				return (s.set(r, a), a);
+			};
+		const o = new Proxy(
+			{ ...(e.props || {}), $$events: {} },
+			{
+				get(r, t) {
+					return d(s.get(t) ?? i(t, Reflect.get(r, t)));
+				},
+				has(r, t) {
+					return t === H ? !0 : (d(s.get(t) ?? i(t, Reflect.get(r, t))), Reflect.has(r, t));
+				},
+				set(r, t, a) {
+					return (O(s.get(t) ?? i(t, a), a), Reflect.set(r, t, a));
+				}
+			}
+		);
+		((this.#e = (e.hydrate ? oe : ce)(e.component, {
+			target: e.target,
+			anchor: e.anchor,
+			props: o,
+			context: e.context,
+			intro: e.intro ?? !1,
+			recover: e.recover
+		})),
+			(!e?.props?.$$host || e.sync === !1) && X(),
+			(this.#t = o.$$events));
+		for (const r of Object.keys(this.#e))
+			r === '$set' ||
+				r === '$destroy' ||
+				r === '$on' ||
+				Y(this, r, {
+					get() {
+						return this.#e[r];
+					},
+					set(t) {
+						this.#e[r] = t;
+					},
+					enumerable: !0
+				});
+		((this.#e.$set = (r) => {
+			Object.assign(o, r);
+		}),
+			(this.#e.$destroy = () => {
+				ie(this.#e);
+			}));
+	}
+	$set(e) {
+		this.#e.$set(e);
+	}
+	$on(e, s) {
+		this.#t[e] = this.#t[e] || [];
+		const i = (...o) => s.call(this, ...o);
+		return (
+			this.#t[e].push(i),
+			() => {
+				this.#t[e] = this.#t[e].filter((o) => o !== i);
+			}
+		);
+	}
+	$destroy() {
+		this.#e.$destroy();
+	}
+}
+const he = 'modulepreload',
+	_e = function (n, e) {
+		return new URL(n, e).href;
+	},
+	V = {},
+	R = function (e, s, i) {
+		let o = Promise.resolve();
+		if (s && s.length > 0) {
+			let w = function (l) {
+				return Promise.all(
+					l.map((m) =>
+						Promise.resolve(m).then(
+							(f) => ({ status: 'fulfilled', value: f }),
+							(f) => ({ status: 'rejected', reason: f })
+						)
+					)
+				);
+			};
+			const t = document.getElementsByTagName('link'),
+				a = document.querySelector('meta[property=csp-nonce]'),
+				p = a?.nonce || a?.getAttribute('nonce');
+			o = w(
+				s.map((l) => {
+					if (((l = _e(l, i)), l in V)) return;
+					V[l] = !0;
+					const m = l.endsWith('.css'),
+						f = m ? '[rel="stylesheet"]' : '';
+					if (i)
+						for (let h = t.length - 1; h >= 0; h--) {
+							const c = t[h];
+							if (c.href === l && (!m || c.rel === 'stylesheet')) return;
+						}
+					else if (document.querySelector(`link[href="${l}"]${f}`)) return;
+					const u = document.createElement('link');
+					if (
+						((u.rel = m ? 'stylesheet' : he),
+						m || (u.as = 'script'),
+						(u.crossOrigin = ''),
+						(u.href = l),
+						p && u.setAttribute('nonce', p),
+						document.head.appendChild(u),
+						m)
+					)
+						return new Promise((h, c) => {
+							(u.addEventListener('load', h),
+								u.addEventListener('error', () => c(new Error(`Unable to preload CSS for ${l}`))));
+						});
+				})
+			);
+		}
+		function r(t) {
+			const a = new Event('vite:preloadError', { cancelable: !0 });
+			if (((a.payload = t), window.dispatchEvent(a), !a.defaultPrevented)) throw t;
+		}
+		return o.then((t) => {
+			for (const a of t || []) a.status === 'rejected' && r(a.reason);
+			return e().catch(r);
+		});
+	},
+	Oe = {};
+var ve = D(
+		'<div id="svelte-announcer" aria-live="assertive" aria-atomic="true" style="position: absolute; left: 0; top: 0; clip: rect(0 0 0 0); clip-path: inset(50%); overflow: hidden; white-space: nowrap; width: 1px; height: 1px"><!></div>'
+	),
+	ge = D('<!> <!>', 1);
+function ye(n, e) {
+	z(e, !0);
+	let s = C(e, 'components', 23, () => []),
+		i = C(e, 'data_0', 3, null),
+		o = C(e, 'data_1', 3, null);
+	(J(() => e.stores.page.set(e.page)),
+		K(() => {
+			(e.stores, e.page, e.constructors, s(), e.form, i(), o(), e.stores.page.notify());
+		}));
+	let r = x(!1),
+		t = x(!1),
+		a = x(null);
+	$(() => {
+		const c = e.stores.page.subscribe(() => {
+			d(r) &&
+				(O(t, !0),
+				ee().then(() => {
+					O(a, document.title || 'untitled page', !0);
+				}));
+		});
+		return (O(r, !0), c);
+	});
+	const p = S(() => e.constructors[1]);
+	var w = ge(),
+		l = k(w);
+	{
+		var m = (c) => {
+				const _ = S(() => e.constructors[0]);
+				var v = A(),
+					b = k(v);
+				(j(
+					b,
+					() => d(_),
+					(g, y) => {
+						T(
+							y(g, {
+								get data() {
+									return i();
+								},
+								get form() {
+									return e.form;
+								},
+								get params() {
+									return e.page.params;
+								},
+								children: (P, be) => {
+									var I = A(),
+										M = k(I);
+									(j(
+										M,
+										() => d(p),
+										(B, F) => {
+											T(
+												F(B, {
+													get data() {
+														return o();
+													},
+													get form() {
+														return e.form;
+													},
+													get params() {
+														return e.page.params;
+													}
+												}),
+												(U) => (s()[1] = U),
+												() => s()?.[1]
+											);
+										}
+									),
+										E(P, I));
+								},
+								$$slots: { default: !0 }
+							}),
+							(P) => (s()[0] = P),
+							() => s()?.[0]
+						);
+					}
+				),
+					E(c, v));
+			},
+			f = (c) => {
+				const _ = S(() => e.constructors[0]);
+				var v = A(),
+					b = k(v);
+				(j(
+					b,
+					() => d(_),
+					(g, y) => {
+						T(
+							y(g, {
+								get data() {
+									return i();
+								},
+								get form() {
+									return e.form;
+								},
+								get params() {
+									return e.page.params;
+								}
+							}),
+							(P) => (s()[0] = P),
+							() => s()?.[0]
+						);
+					}
+				),
+					E(c, v));
+			};
+		L(l, (c) => {
+			e.constructors[1] ? c(m) : c(f, !1);
+		});
+	}
+	var u = te(l, 2);
+	{
+		var h = (c) => {
+			var _ = ve(),
+				v = se(_);
+			{
+				var b = (g) => {
+					var y = ue();
+					(ne(() => le(y, d(a))), E(g, y));
+				};
+				L(v, (g) => {
+					d(t) && g(b);
+				});
+			}
+			(ae(_), E(c, _));
+		};
+		L(u, (c) => {
+			d(r) && c(h);
+		});
+	}
+	(E(n, w), re());
+}
+const xe = de(ye),
+	Se = [
+		() =>
+			R(
+				() => import('../nodes/0.DumlcDdq.js'),
+				__vite__mapDeps([0, 1, 2, 3, 4, 5, 6, 7]),
+				import.meta.url
+			),
+		() =>
+			R(
+				() => import('../nodes/1.xKk6hVVN.js'),
+				__vite__mapDeps([8, 1, 2, 3, 9, 10, 5]),
+				import.meta.url
+			),
+		() =>
+			R(
+				() => import('../nodes/2.aqFhjnjP.js'),
+				__vite__mapDeps([11, 1, 2, 3, 9, 10, 12, 6, 5, 13, 4, 14]),
+				import.meta.url
+			),
+		() =>
+			R(
+				() => import('../nodes/3.C7LN2MOB.js'),
+				__vite__mapDeps([15, 2, 1, 3, 10, 5]),
+				import.meta.url
+			),
+		() =>
+			R(
+				() => import('../nodes/4.BEPRWQ6M.js'),
+				__vite__mapDeps([16, 1, 2, 3, 9, 10, 12, 4, 5, 13, 14, 17]),
+				import.meta.url
+			)
+	],
+	Ae = [0],
+	Le = { '/': [2], '/how-to-play': [3], '/play/[gameCode]': [-5] },
+	N = {
+		handleError: ({ error: n }) => {
+			console.error(n);
+		},
+		reroute: () => {},
+		transport: {}
+	},
+	Ee = Object.fromEntries(Object.entries(N.transport).map(([n, e]) => [n, e.decode])),
+	Te = Object.fromEntries(Object.entries(N.transport).map(([n, e]) => [n, e.encode])),
+	Ce = !1,
+	je = (n, e) => Ee[n](e);
+export {
+	je as decode,
+	Ee as decoders,
+	Le as dictionary,
+	Te as encoders,
+	Ce as hash,
+	N as hooks,
+	Oe as matchers,
+	Se as nodes,
+	xe as root,
+	Ae as server_loads
+};

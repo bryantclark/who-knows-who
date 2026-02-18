@@ -26,6 +26,11 @@
 	</main>
 
 	<footer class="py-6 text-center text-slate-500 text-sm">
-		<p>Built with <a href="https://kit.svelte.dev" class="font-bold text-slate-700 hover:text-blue-600 transition-colors">SvelteKit</a></p>
+		<p>
+			Built with <a
+				href="https://kit.svelte.dev"
+				class="font-bold text-slate-700 hover:text-blue-600 transition-colors">SvelteKit</a
+			>
+		</p>
 	</footer>
 </div>
