@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { db } from '../../../firebase/firebase';
+	import { db } from '$lib/firebase/firebase';
 	import { ref, onValue } from 'firebase/database';
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';

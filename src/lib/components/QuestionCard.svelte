@@ -36,7 +36,7 @@
 </script>
 
 <div class="vibrant-card-premium p-1 md:p-2 relative overflow-hidden">
-	<div class="bg-dark-bg/20 backdrop-blur-2xl rounded-[2.3rem] p-8 md:p-12 space-y-12">
+	<div class="bg-dark-bg/20 backdrop-blur-md rounded-[2.3rem] p-8 md:p-12 space-y-12">
 		<!-- Header: Game Code & Copy Link -->
 		<div class="flex flex-wrap justify-between items-center border-b border-white/5 pb-6">
 			<div class="flex items-center gap-4">

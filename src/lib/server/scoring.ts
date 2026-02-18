@@ -1,5 +1,5 @@
 import { adminDb } from './firebaseAdmin';
-import { calculateKnowledgeScore } from '../../game/scoreCalculator';
+import { calculateKnowledgeScore } from '$lib/game/scoreCalculator';
 
 export async function processRoundScores(gameCode: string) {
     if (!adminDb) {

@@ -1,5 +1,5 @@
 import { adminDb } from '$lib/server/firebaseAdmin';
-import { generatePersonalQuestion } from '../../../game/questionGenerator';
+import { generatePersonalQuestion } from '$lib/game/questionGenerator';
 import type { PageServerLoad } from './$types';
 import { fail, redirect, isRedirect, type Actions } from '@sveltejs/kit';
 import { processRoundScores } from '$lib/server/scoring';

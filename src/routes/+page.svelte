@@ -3,7 +3,7 @@
 	import { fade, fly, scale } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import SynergyMatrix from '../lib/components/SynergyMatrix.svelte';
+	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
 
 	let { data, form } = $props<{ data: any; form: any }>();
 
@@ -33,7 +33,7 @@
 			class="fixed inset-0 overflow-hidden pointer-events-none -z-50 opacity-40 flex items-center justify-center"
 		>
 			<div class="scale-[4] transform">
-				<SynergyMatrix demoMode={true} />
+				<SynergyMatrix demoMode={true} isStatic={true} />
 			</div>
 			<div
 				class="absolute inset-0 bg-gradient-to-b from-dark-bg/80 via-transparent to-dark-bg/80"
@@ -41,7 +41,7 @@
 		</div>
 
 		<div
-			class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 blur-[120px] rounded-full animate-pulse-slow -z-10"
+			class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 blur-[120px] rounded-full -z-10"
 		></div>
 
 		<h1
