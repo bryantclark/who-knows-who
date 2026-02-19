@@ -5,7 +5,9 @@
 	import { page } from '$app/stores';
 	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
 
-	let { data, form } = $props<{ data: any; form: any }>();
+	import type { ActionData } from './$types';
+
+	let { form }: { form: ActionData } = $props();
 
 	let playerName = $state('');
 	let gameCode = $state('');

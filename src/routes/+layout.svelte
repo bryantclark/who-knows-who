@@ -1,9 +1,10 @@
 <script lang="ts">
 	import Footer from '$lib/components/Footer.svelte';
 	import './styles.css';
-	import { fade, fly } from 'svelte/transition';
 
-	let { children } = $props<{ children: any }>();
+	import { type Snippet } from 'svelte';
+
+	let { children }: { children: Snippet } = $props();
 </script>
 
 <div class="min-h-screen relative overflow-hidden bg-[#0b0e14]">

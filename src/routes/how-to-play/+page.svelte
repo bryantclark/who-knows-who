@@ -51,7 +51,7 @@
 		<p>Ps yes i had chat gpt write this version of the page lol</p>
 		<button
 			class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300"
-			on:click={handleStartGame}
+			onclick={handleStartGame}
 		>
 			Go to Game Entry
 		</button>

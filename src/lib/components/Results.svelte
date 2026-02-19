@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fade, blur, fly } from 'svelte/transition';
+	import { fade, fly } from 'svelte/transition';
 	import SynergyMatrix from './SynergyMatrix.svelte';
 	import type { ScoreData } from '../utils/demoData';
 
@@ -8,12 +8,12 @@
 		scoreData = {},
 		playerName,
 		gameCode
-	} = $props<{
+	}: {
 		players: string[];
 		scoreData: ScoreData;
 		playerName: string;
 		gameCode: string;
-	}>();
+	} = $props();
 
 	// Calculate overall average for each player (how well they know others)
 	const playerPerformance = $derived(
@@ -32,7 +32,7 @@
 					avg: count > 0 ? Math.round(totalAccuracy / count) : 0
 				};
 			})
-			.sort((a: any, b: any) => b.avg - a.avg)
+			.sort((a: { name: string; avg: number }, b: { name: string; avg: number }) => b.avg - a.avg)
 	);
 
 	const winner = $derived(playerPerformance[0]);
@@ -45,7 +45,10 @@
 				name: guesser,
 				accuracy: scoreData[guesser]?.[playerName]?.accuracyPercentage || 0
 			}))
-			.sort((a: any, b: any) => b.accuracy - a.accuracy)
+			.sort(
+				(a: { name: string; accuracy: number }, b: { name: string; accuracy: number }) =>
+					b.accuracy - a.accuracy
+			)
 	);
 
 	// Who do I know best?
@@ -56,7 +59,10 @@
 				name: answerer,
 				accuracy: scoreData[playerName]?.[answerer]?.accuracyPercentage || 0
 			}))
-			.sort((a: any, b: any) => b.accuracy - a.accuracy)
+			.sort(
+				(a: { name: string; accuracy: number }, b: { name: string; accuracy: number }) =>
+					b.accuracy - a.accuracy
+			)
 	);
 </script>
 

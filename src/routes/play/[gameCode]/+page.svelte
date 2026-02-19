@@ -3,7 +3,6 @@
 	import { ref, onValue } from 'firebase/database';
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { browser } from '$app/environment';
 	import { fade } from 'svelte/transition';
 
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
@@ -11,22 +10,36 @@
 	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
 	import Lobby from '$lib/components/Lobby.svelte';
 	import Results from '$lib/components/Results.svelte';
+	import type { PageData } from './$types';
+	import type { ScoreData } from '$lib/utils/demoData';
 
-	let { data, form } = $props<{ data: any; form: any }>();
+	interface GameData {
+		players?: Record<string, boolean>;
+		answeredPlayers?: Record<string, boolean>;
+		scores?: ScoreData;
+		host?: string;
+		currentAnswerer?: { name: string };
+		roundStatus?: 'complete' | 'answering';
+		status?: 'waiting' | 'playing' | 'finished';
+		questions?: string;
+		correctAnswer?: string;
+	}
 
-	let gameData = $state<any>(null);
+	let { data }: { data: PageData } = $props();
+
+	let gameData = $state<GameData | null>(null);
 	let players = $state<string[]>([]);
 	let answeredPlayers = $state<string[]>([]);
-	let scoreData = $state<any>({});
+	let scoreData = $state<ScoreData>({});
 
 	onMount(() => {
 		const gameRef = ref(db, `gamecode/${data.gameCode}`);
 		const unsubscribe = onValue(gameRef, (snapshot) => {
 			if (snapshot.exists()) {
 				gameData = snapshot.val();
-				players = gameData.players ? Object.keys(gameData.players) : [];
-				answeredPlayers = gameData.answeredPlayers ? Object.keys(gameData.answeredPlayers) : [];
-				scoreData = gameData.scores || {};
+				players = gameData?.players ? Object.keys(gameData.players) : [];
+				answeredPlayers = gameData?.answeredPlayers ? Object.keys(gameData.answeredPlayers) : [];
+				scoreData = gameData?.scores || {};
 			}
 		});
 
@@ -56,7 +69,12 @@
 			</div>
 		</div>
 	{:else if gameStatus === 'waiting'}
-		<Lobby gameCode={data.gameCode} {players} playerName={data.playerName} host={gameData.host} />
+		<Lobby
+			gameCode={data.gameCode}
+			{players}
+			playerName={data.playerName}
+			host={gameData?.host || ''}
+		/>
 	{:else if gameStatus === 'finished'}
 		<Results {players} {scoreData} playerName={data.playerName} gameCode={data.gameCode} />
 	{:else}
@@ -65,16 +83,16 @@
 			<div class="max-w-4xl mx-auto w-full relative">
 				{#if isRoundComplete}
 					<RoundResults
-						questions={gameData.questions}
-						currentAnswererName={gameData.currentAnswerer.name}
-						correctAnswer={gameData.correctAnswer}
+						questions={gameData?.questions || ''}
+						currentAnswererName={gameData?.currentAnswerer?.name || ''}
+						correctAnswer={gameData?.correctAnswer || ''}
 						gameCode={data.gameCode}
 					/>
 				{:else}
 					<QuestionCard
-						questions={gameData.questions}
+						questions={gameData?.questions || ''}
 						{isAnswerer}
-						currentAnswererName={gameData.currentAnswerer?.name}
+						currentAnswererName={gameData?.currentAnswerer?.name || ''}
 						{hasAnswered}
 						playersCount={players.length}
 						answeredPlayersCount={answeredPlayers.length}
@@ -88,7 +106,7 @@
 						{answeredPlayers}
 						gameCode={data.gameCode}
 						currentPlayerName={data.playerName}
-						targetPlayerName={gameData.currentAnswerer?.name}
+						targetPlayerName={gameData?.currentAnswerer?.name}
 					/>
 				</div>
 
