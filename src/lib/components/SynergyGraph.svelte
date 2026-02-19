@@ -101,26 +101,26 @@
 				d={path}
 				fill="none"
 				stroke={color}
-				stroke-width={isLargeGroup ? 1.5 : 2.5}
+				stroke-width={isLargeGroup ? 1 : 2.5}
 				stroke-opacity={getConnectionOpacity(score, isHighlighted)}
 				stroke-linecap="round"
-				class="transition-all duration-500"
+				class="transition-opacity duration-300"
 			/>
 
-			{#if isHighlighted}
+			{#if isHighlighted && !isLargeGroup}
 				{@const scoreAB = scoreData[pair.start.name]?.[pair.end.name]?.accuracyPercentage || 0}
 				{@const scoreBA = scoreData[pair.end.name]?.[pair.start.name]?.accuracyPercentage || 0}
 
-				<!-- Flow A -> B (Color based on A's accuracy on B) -->
+				<!-- Flow A -> B -->
 				<circle
-					r="3"
+					r="2.5"
 					fill={interpolateColor(scoreAB)}
 					class="animate-particle-flow"
 					style="offset-path: path('{path}');"
 				/>
-				<!-- Flow B -> A (Color based on B's accuracy on A) -->
+				<!-- Flow B -> A -->
 				<circle
-					r="3"
+					r="2.5"
 					fill={interpolateColor(scoreBA)}
 					class="animate-particle-flow-reverse"
 					style="offset-path: path('{path}');"

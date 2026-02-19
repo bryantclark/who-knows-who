@@ -188,7 +188,7 @@ export const actions: Actions = {
 			// Competitive mode check
 			if (game.gameMode === 'competitive') {
 				const counts = game.questionCounts || {};
-				const finishedPlayers = players.filter(p => (counts[p] || 0) >= 4);
+				const finishedPlayers = players.filter((p) => (counts[p] || 0) >= 4);
 
 				if (finishedPlayers.length === players.length) {
 					await gameRef.update({ status: 'finished' });
@@ -196,7 +196,7 @@ export const actions: Actions = {
 				}
 
 				// Pick someone who hasn't reached 4 yet
-				const availablePlayers = players.filter(p => (counts[p] || 0) < 4);
+				const availablePlayers = players.filter((p) => (counts[p] || 0) < 4);
 				const nextAnswerer = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
 				const usedQuestions = game.usedQuestions || [];
 				const questionData = await generatePersonalQuestion(nextAnswerer, usedQuestions);

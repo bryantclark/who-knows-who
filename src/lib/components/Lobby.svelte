@@ -225,7 +225,7 @@
 								></div>
 							</div>
 							<p class="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
-								Awaiting Host Selection
+								Waiting for Host to Start Game
 							</p>
 						</div>
 					{/if}

@@ -36,14 +36,16 @@ describe('generatePersonalQuestion', () => {
 		mockFetch.mockResolvedValue({
 			ok: true,
 			json: async () => ({
-				choices: [{
-					message: {
-						content: JSON.stringify({
-							question: "What is Bob's favorite movie?",
-							type: 'preference'
-						})
+				choices: [
+					{
+						message: {
+							content: JSON.stringify({
+								question: "What is Bob's favorite movie?",
+								type: 'preference'
+							})
+						}
 					}
-				}]
+				]
 			})
 		});
 		vi.stubGlobal('fetch', mockFetch);
@@ -135,7 +137,7 @@ describe('generatePersonalQuestion', () => {
 
 		expect(prompt).toContain("What is Bob's favorite movie?");
 		expect(prompt).toContain("What is Bob's dream job?");
-		expect(prompt).toContain("IMPORTANT: Do NOT generate any of these previous questions");
+		expect(prompt).toContain('IMPORTANT: Do NOT generate any of these previous questions');
 	});
 
 	it('should avoid previous questions in fallback logic', async () => {
@@ -146,8 +148,8 @@ describe('generatePersonalQuestion', () => {
 		const previousQuestions = [
 			"What is Bob's favorite movie?",
 			"What is Bob's dream job?",
-			"What food does Bob hate the most?",
-			"If Bob could travel anywhere, where would Bob go?"
+			'What food does Bob hate the most?',
+			'If Bob could travel anywhere, where would Bob go?'
 		];
 		// The only one left should be "What was Bob's first pet's name?"
 
