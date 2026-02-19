@@ -1,0 +1,65 @@
+import {
+	aB as f,
+	aL as v,
+	aM as E,
+	aN as p,
+	f as _,
+	h as d,
+	a6 as o,
+	aO as h,
+	aa as T,
+	a4 as i,
+	aP as N,
+	af as g
+} from './v5j2BDPd.js';
+function y(n) {
+	var a = document.createElement('template');
+	return ((a.innerHTML = n.replaceAll('<!>', '<!---->')), a.content);
+}
+function r(n, a) {
+	var e = _;
+	e.nodes_start === null && ((e.nodes_start = n), (e.nodes_end = a));
+}
+function x(n, a) {
+	var e = (a & E) !== 0,
+		u = (a & p) !== 0,
+		t,
+		l = !n.startsWith('<!>');
+	return () => {
+		if (d) return (r(o, null), o);
+		t === void 0 && ((t = y(l ? n : '<!>' + n)), e || (t = f(t)));
+		var s = u || v ? document.importNode(t, !0) : t.cloneNode(!0);
+		if (e) {
+			var c = f(s),
+				m = s.lastChild;
+			r(c, m);
+		} else r(s, s);
+		return s;
+	};
+}
+function A(n = '') {
+	if (!d) {
+		var a = i(n + '');
+		return (r(a, a), a);
+	}
+	var e = o;
+	return (e.nodeType !== N && (e.before((e = i())), g(e)), r(e, e), e);
+}
+function L() {
+	if (d) return (r(o, null), o);
+	var n = document.createDocumentFragment(),
+		a = document.createComment(''),
+		e = i();
+	return (n.append(a, e), r(a, e), n);
+}
+function O(n, a) {
+	if (d) {
+		var e = _;
+		(((e.f & h) === 0 || e.nodes_end === null) && (e.nodes_end = o), T());
+		return;
+	}
+	n !== null && n.before(a);
+}
+const M = '5';
+typeof window < 'u' && ((window.__svelte ??= {}).v ??= new Set()).add(M);
+export { O as a, r as b, L as c, x as f, A as t };

@@ -1,0 +1,59 @@
+.alert.svelte-1gd9mo5 {
+	background-color: #fdd6d6;
+	border: 1px solid #fbb1b1;
+	color: #d8000c;
+	padding: 16px;
+	border-radius: 8px;
+	font-size: 16px;
+	margin-bottom: 16px;
+}
+.alert-error.svelte-1gd9mo5 {
+	background-color: #ffe5e5;
+}
+.textarea.svelte-1gd9mo5 {
+	width: 100%;
+	padding: 0;
+	border-radius: 8px;
+	border: 1px solid #d1d5db;
+	font-size: 16px;
+	transition: border-color 0.2s ease;
+	resize: vertical;
+}
+.textarea.svelte-1gd9mo5:focus {
+	border-color: #3b82f6;
+	outline: none;
+}
+.submit-btn.svelte-1gd9mo5 {
+	background-color: #0c62a0;
+	color: #fff;
+	font-weight: 700;
+	padding: 12px 24px;
+	border-radius: 8px;
+	width: 100%;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	margin-top: 16px;
+	font-size: 16px;
+}
+.submit-btn.svelte-1gd9mo5:disabled {
+	background-color: #93c5fd;
+	cursor: not-allowed;
+}
+.submit-btn.svelte-1gd9mo5:hover:not(:disabled) {
+	background-color: #2563eb;
+}
+.end-game-btn.svelte-1gd9mo5 {
+	background-color: #b82c2c;
+	color: #fff;
+	font-weight: 700;
+	padding: 12px 24px;
+	border-radius: 8px;
+	width: 20%;
+	cursor: pointer;
+	transition: background-color 0.3s;
+	margin-top: 16px;
+	font-size: 16px;
+}
+.end-game-btn.svelte-1gd9mo5:hover {
+	background-color: #b91c1c;
+}

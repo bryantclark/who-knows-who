@@ -1,228 +1,106 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { goto, invalidateAll } from '$app/navigation';
-    import { get, ref, remove } from 'firebase/database';
-    import { db } from '../../../firebase/firebase';
-    import GraphScore from "../../GraphScore.svelte";
+	import { db } from '$lib/firebase/firebase';
+	import { ref, onValue } from 'firebase/database';
+	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
+	import { browser } from '$app/environment';
+	import { fade } from 'svelte/transition';
 
-    export let data: {
-        question?: string
-        questionType?: string
-        answerer?: string
-    } = {}
-    export let form: {
-        success?: boolean
-        message?: string
-        error?: string
-    } = {}
+	import QuestionCard from '$lib/components/QuestionCard.svelte';
+	import RoundResults from '$lib/components/RoundResults.svelte';
+	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
+	import Lobby from '$lib/components/Lobby.svelte';
+	import Results from '$lib/components/Results.svelte';
 
-    let gameCode = ''
-    let playerName = ''
-    let formSubmitted = false
-    let submitting = false
-    let message: string | null = null
+	let { data, form } = $props<{ data: any; form: any }>();
 
-    onMount(() => {
-        gameCode = localStorage.getItem('gameCode') || ''
-        playerName = localStorage.getItem('playerName') || ''
-    })
+	let gameData = $state<any>(null);
+	let players = $state<string[]>([]);
+	let answeredPlayers = $state<string[]>([]);
+	let scoreData = $state<any>({});
 
-    $: {
-        if (form?.success) {
-            formSubmitted = true
-            message= form.message ?? null
-        }
-    }
+	onMount(() => {
+		const gameRef = ref(db, `gamecode/${data.gameCode}`);
+		const unsubscribe = onValue(gameRef, (snapshot) => {
+			if (snapshot.exists()) {
+				gameData = snapshot.val();
+				players = gameData.players ? Object.keys(gameData.players) : [];
+				answeredPlayers = gameData.answeredPlayers ? Object.keys(gameData.answeredPlayers) : [];
+				scoreData = gameData.scores || {};
+			}
+		});
 
-    async function resetForm() {
-    try {    
-        const roundStatus: string = (await get(ref(db, `gamecode/${gameCode}/roundStatus/`))).val()
-        if(roundStatus === 'inProgress'){ 
-            form.error = 'Please wait until everyone has answered!'
-            return
-        }
-        formSubmitted = false
-        message = null
-        submitting = false
-        
-        // reload page. i have to do this so everyone but the last person to answer also gets the new question
-        await invalidateAll()
-        
-    } catch (error) {
-        console.error('Error resetting form:', error)
-        alert('Failed to reset. Please try again.')
-    }
-}
+		return () => unsubscribe();
+	});
 
-    async function endGame() {
-        try {
-            // Remove the game from the database
-            const gameRef = ref(db, `gamecode/${gameCode}`)
-            await remove(gameRef)
-
-            // Clear local storage
-            localStorage.removeItem('gameCode')
-            localStorage.removeItem('playerName')
-
-            // Redirect to start page
-            await goto('/')
-        } catch (error) {
-            console.error('Error ending game:', error)
-            alert('Failed to end game. Please try again.')
-        }
-    }
+	const isAnswerer = $derived(gameData?.currentAnswerer?.name === data.playerName);
+	const hasAnswered = $derived(answeredPlayers.includes(data.playerName));
+	const isRoundComplete = $derived(gameData?.roundStatus === 'complete');
+	const gameStatus = $derived(gameData?.status || 'waiting');
 </script>
 
-<div class="container1">
-    
-    {#if form?.error}
-        <div class="alert alert-error mb-6">
-            {form.error}
-        </div>
-    {/if}
+<div class="max-w-7xl mx-auto px-4 py-8 md:py-12" in:fade={{ duration: 800 }}>
+	{#if !gameData}
+		<div class="h-[70vh] flex flex-col items-center justify-center text-center space-y-8" in:fade>
+			<div class="relative">
+				<div
+					class="w-20 h-20 border-2 border-primary/20 rounded-full animate-ping absolute inset-0"
+				></div>
+				<div
+					class="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin"
+				></div>
+			</div>
+			<div class="space-y-2">
+				<p class="text-2xl font-black uppercase tracking-[0.4em] text-white">Syncing</p>
+				<p class="text-slate-500 font-medium uppercase tracking-widest text-xs">Connecting...</p>
+			</div>
+		</div>
+	{:else if gameStatus === 'waiting'}
+		<Lobby gameCode={data.gameCode} {players} playerName={data.playerName} host={gameData.host} />
+	{:else if gameStatus === 'finished'}
+		<Results {players} {scoreData} playerName={data.playerName} gameCode={data.gameCode} />
+	{:else}
+		<div class="space-y-12">
+			<!-- Main Action Area -->
+			<div class="max-w-4xl mx-auto w-full relative">
+				{#if isRoundComplete}
+					<RoundResults
+						questions={gameData.questions}
+						currentAnswererName={gameData.currentAnswerer.name}
+						correctAnswer={gameData.correctAnswer}
+						gameCode={data.gameCode}
+					/>
+				{:else}
+					<QuestionCard
+						questions={gameData.questions}
+						{isAnswerer}
+						currentAnswererName={gameData.currentAnswerer?.name}
+						{hasAnswered}
+						playersCount={players.length}
+						answeredPlayersCount={answeredPlayers.length}
+						gameCode={data.gameCode}
+					/>
+				{/if}
 
-    {#if !formSubmitted}
-        <div class="question-container mb-6">
-            <h1 class="text">Welcome, {playerName}!</h1>
-            <!-- The how to play idea is just not fully baked. i dont like how it looks rn -->
-            <!-- <a class="how-to-play" href="/how-to-play">How to play</a> -->
-            <h3 class="text">{data.question}</h3>
+				<div class="pt-4 max-w-5xl mx-auto w-full">
+					<SynergyMatrix
+						{players}
+						{answeredPlayers}
+						gameCode={data.gameCode}
+						currentPlayerName={data.playerName}
+						targetPlayerName={gameData.currentAnswerer?.name}
+					/>
+				</div>
 
-            <form method="POST">
-                <div class="mb-6">
-                    <textarea 
-                        id="answer" 
-                        name="answer" 
-                        rows="4" 
-                        required
-                        class="textarea"
-                        placeholder="Your answer"
-                    ></textarea>
-                </div>
-
-                <button 
-                    type="submit" 
-                    disabled={submitting}
-                    class="submit-btn"
-                >
-                    {submitting ? 'Submitting...' : 'Submit Answer'}
-                </button>
-            </form>
-        </div>
-    {:else}
-        <div class="result-container bg-white shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4 text-center">
-            <h2 class="text-3xl font-bold mb-6">
-                {message}
-            </h2>
-            <p>Please wait until everyone has answered and then hit next question</p>
-            <button 
-                on:click={resetForm}
-                class="retry-btn"
-            >
-                Next Question
-            </button>
-
-        </div>
-    {/if}
-
-    {#if gameCode}
-        <GraphScore gameCode={gameCode}/>
-    {/if}
-    <button 
-    on:click={endGame}
-    class="end-game-btn"
->
-    End Game
-</button>
+				<!-- Simplified Exit -->
+				<form method="POST" action="?/endGame" use:enhance class="fixed top-6 left-6 z-50">
+					<button
+						class="px-5 py-2 bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+					>
+						Leave
+					</button>
+				</form>
+			</div>
+		</div>
+	{/if}
 </div>
-
-<style>
-    .alert {
-        background-color: #fdd6d6;
-        border: 1px solid #fbb1b1;
-        color: #d8000c;
-        padding: 16px;
-        border-radius: 8px;
-        font-size: 16px;
-        margin-bottom: 16px;
-    }
-
-    .alert-error {
-        background-color: #ffe5e5;
-    }
-
-    .textarea {
-        width: 100%;
-        padding: 0px;
-        border-radius: 8px;
-        border: 1px solid #d1d5db;
-        font-size: 16px;
-        transition: border-color 0.2s ease;
-        resize: vertical;
-    }
-
-    .textarea:focus {
-        border-color: #3b82f6;
-        outline: none;
-    }
-
-    .submit-btn {
-        background-color: #0c62a0;
-        color: white;
-        font-weight: bold;
-        padding: 12px 24px;
-        border-radius: 8px;
-        width: 100%;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        margin-top: 16px;
-        font-size: 16px;
-    }
-
-    .submit-btn:disabled {
-        background-color: #93c5fd;
-        cursor: not-allowed;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-        background-color: #2563eb;
-    }
-
-    .end-game-btn {
-        background-color: #b82c2c; /* Red color */
-        color: white;
-        font-weight: bold;
-        padding: 12px 24px;
-        border-radius: 8px;
-        width: 20%;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        margin-top: 16px;
-        font-size: 16px;
-    }
-
-    .end-game-btn:hover {
-        background-color: #b91c1c; /* Darker red on hover */
-    }
-
-    /* .how-to-play {
-		color: var(--color-text);
-	}
-
-	.how-to-play::before {
-		content: 'i';
-		display: inline-block;
-		font-size: 0.8em;
-		font-weight: 900;
-		width: 1em;
-		height: 1em;
-		padding: 0.2em;
-		line-height: 1;
-		border: 1.5px solid var(--color-text);
-		border-radius: 50%;
-		text-align: center;
-		margin: 0 0.5em 0 0;
-		position: center;
-		top: -0.05em;
-	} */
-</style>

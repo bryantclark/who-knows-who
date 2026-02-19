@@ -1,67 +1,54 @@
-<script>
-	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
-	import { webVitals } from '$lib/vitals';
-	import Header from './Header.svelte';
+<script lang="ts">
+	import Footer from '$lib/components/Footer.svelte';
 	import './styles.css';
+	import { fade, fly } from 'svelte/transition';
 
-	/** @type {import('./$types').LayoutServerData} */
-	export let data;
-
-	$: if (browser && data?.analyticsId) {
-		webVitals({
-			path: $page.url.pathname,
-			params: $page.params,
-			analyticsId: data.analyticsId
-		});
-	}
+	let { children } = $props<{ children: any }>();
 </script>
 
-<div class="app">
-	<Header />
+<div class="min-h-screen relative overflow-hidden bg-[#0b0e14]">
+	<!-- Animated Background Elements -->
+	<div class="fixed inset-0 pointer-events-none">
+		<div
+			class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full"
+		></div>
+		<div
+			class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 blur-[120px] rounded-full"
+		></div>
+		<div
+			class="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-accent/5 blur-[100px] rounded-full"
+		></div>
 
-	<main>
-		<slot />
-	</main>
+		<!-- Decorative Dots/Grid -->
+		<div class="absolute inset-0 game-grid-bg opacity-40"></div>
+	</div>
 
-	<footer>
-		<p>visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to learn SvelteKit</p>
-	</footer>
+	<div class="relative z-10 flex flex-col min-h-screen">
+		<main class="flex-grow container mx-auto px-4 py-8 md:py-16">
+			{@render children()}
+		</main>
+
+		<Footer />
+	</div>
 </div>
 
 <style>
-	.app {
-		display: flex;
-		flex-direction: column;
-		min-height: 100vh;
+	:global(.bg-primary) {
+		background-color: #8b5cf6;
 	}
-
-	main {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		padding: 1rem;
-		width: 100%;
-		max-width: 64rem;
-		margin: 0 auto;
-		box-sizing: border-box;
+	:global(.text-primary) {
+		color: #8b5cf6;
 	}
-
-	footer {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		padding: 12px;
+	:global(.bg-secondary) {
+		background-color: #ec4899;
 	}
-
-	footer a {
-		font-weight: bold;
+	:global(.text-secondary) {
+		color: #ec4899;
 	}
-
-	@media (min-width: 480px) {
-		footer {
-			padding: 12px 0;
-		}
+	:global(.bg-accent) {
+		background-color: #06b6d4;
+	}
+	:global(.bg-surface) {
+		background-color: #161b22;
 	}
 </style>

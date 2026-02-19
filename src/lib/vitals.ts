@@ -50,12 +50,16 @@ function sendToAnalytics(metric: any, options: VitalsOptions) {
 
 export function webVitals(options: Omit<VitalsOptions, 'debug'> & { debug?: boolean }) {
 	try {
-		console.log(`[Web Vitals] for page ${options.path}`);
-		onFID((metric) => sendToAnalytics(metric, options));
-		onTTFB((metric) => sendToAnalytics(metric, options));
-		onLCP((metric) => sendToAnalytics(metric, options));
-		onCLS((metric) => sendToAnalytics(metric, options));
-		onFCP((metric) => sendToAnalytics(metric, options));
+		const fullOptions: VitalsOptions = {
+			debug: false,
+			...options
+		};
+		console.log(`[Web Vitals] for page ${fullOptions.path}`);
+		onFID((metric) => sendToAnalytics(metric, fullOptions));
+		onTTFB((metric) => sendToAnalytics(metric, fullOptions));
+		onLCP((metric) => sendToAnalytics(metric, fullOptions));
+		onCLS((metric) => sendToAnalytics(metric, fullOptions));
+		onFCP((metric) => sendToAnalytics(metric, fullOptions));
 	} catch (err) {
 		console.error(`[Web Vitals] for page ${options.path}`, err);
 	}

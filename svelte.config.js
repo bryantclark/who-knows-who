@@ -1,5 +1,5 @@
 import adapter from '@sveltejs/adapter-vercel';
-import { vitePreprocess } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -13,7 +13,7 @@ const config = {
 				if (path === '/contact' && message.includes('Cannot prerender pages with actions')) {
 					return;
 				}
-				
+
 				// Otherwise, throw the error
 				throw new Error(message);
 			}
@@ -22,4 +22,4 @@ const config = {
 	preprocess: vitePreprocess()
 };
 
-export default config; 
+export default config;
