@@ -18,4 +18,3 @@ export const db = getDatabase(app);
 
 // Function to set up the initial database structure and fetch scores - logic moved to server-side or unused
 // Keeping file for client-side db initialization
-

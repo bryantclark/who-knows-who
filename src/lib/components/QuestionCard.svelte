@@ -72,7 +72,7 @@
 					✓
 				</div>
 				<div class="space-y-2">
-					<h3 class="text-xl font-black uppercase tracking-widest text-white">Entry Encrypted</h3>
+					<h3 class="text-xl font-black uppercase tracking-widest text-white">Entry Saved</h3>
 					<p class="text-slate-500 text-sm font-medium max-w-xs mx-auto">
 						Waiting for {remaining} more {remaining === 1 ? 'player' : 'players'} to finalize their response.
 					</p>

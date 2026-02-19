@@ -7,10 +7,10 @@ export interface QuestionData {
 }
 
 const FALLBACK_QUESTIONS: QuestionData[] = [
-  { question: "What is your favorite movie?", type: 'preference' },
-  { question: "What is your dream job?", type: 'interest' },
-  { question: "What food do you hate the most?", type: 'preference' },
-  { question: "If you could travel anywhere, where would you go?", type: 'wildcard' },
+  { question: 'What is your favorite movie?', type: 'preference' },
+  { question: 'What is your dream job?', type: 'interest' },
+  { question: 'What food do you hate the most?', type: 'preference' },
+  { question: 'If you could travel anywhere, where would you go?', type: 'wildcard' },
   { question: "What was your first pet's name?", type: 'past' }
 ];
 
@@ -44,9 +44,12 @@ export async function generatePersonalQuestion(answerer: string): Promise<Questi
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' }); // Updated model name
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); // Updated model name
 
-    const prompt = SYSTEM_PROMPT.replace('{{answerer}}', answerer).replace('{{answerer}}', answerer); // Replace multiple occurrences if needed
+    const prompt = SYSTEM_PROMPT.replace('{{answerer}}', answerer).replace(
+      '{{answerer}}',
+      answerer
+    ); // Replace multiple occurrences if needed
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
@@ -71,7 +74,7 @@ function getRandomFallback(answerer: string): QuestionData {
   // Replace "your" with "answerer's" if needed, but the fallbacks use "your" which might need adjustment
   // Actually, the original code used "answerer's" in the template.
   // My CONSTANTS above use "your". Let's fix that dynamically or just use generic versions.
-  // The original used `${answerer}`. 
+  // The original used `${answerer}`.
 
   // Let's adjust the fallback usage to be consistent.
   // We will treat the fallbacks as templates too.
@@ -80,4 +83,3 @@ function getRandomFallback(answerer: string): QuestionData {
     type: fallback.type
   };
 }
-

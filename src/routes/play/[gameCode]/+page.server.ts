@@ -118,7 +118,7 @@ export const actions: Actions = {
 			const updatedAnswered = Object.keys(updatedAnsweredSnapshot.val() || {});
 
 			if (updatedAnswered.length === players.length) {
-				// Round complete logic will be handled by a "Next Round" action 
+				// Round complete logic will be handled by a "Next Round" action
 				// to avoid race conditions and let everyone see the results
 				await gameRef.update({ roundStatus: 'complete' });
 			} else {

@@ -6,60 +6,125 @@ export async function calculateKnowledgeScore(
     guess: string,
     correctAnswer: string
 ) {
+    // Deprecated: Use calculateBatchScores for better performance
+    const result = await calculateBatchScores(question, correctAnswer, { single: guess });
+    return result['single'] || 0;
+}
+
+export async function calculateBatchScores(
+    question: string,
+    correctAnswer: string,
+    guesses: Record<string, string>
+): Promise<Record<string, number>> {
     const apiKey = GEMINI_API_KEY;
-    if (!apiKey) throw new Error('GEMINI_API_KEY is not configured');
+    const scores: Record<string, number> = {};
+    const pendingGuesses: Record<string, string> = {};
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
-    console.log('Evaluating semantic score:', { question, correctAnswer, guess });
+    // 1. Local Exact/Fuzzy Match (Short Circuit)
+    const cleanCorrect = correctAnswer.toLowerCase().trim();
 
-    const prompt = `System: You are an expert semantic evaluator for a social trivia game.
-    The goal is to determine if a user's guess is "close enough" to the target answer to be considered correct.
-
-    Context:
-    - Question: "${question}"
-    - Correct Answer (from the source): "${correctAnswer}"
-    - User's Guess: "${guess}"
-
-    Evaluation Rules:
-    - Be reasonably lenient with typos, abbreviations, and synonyms (e.g., "NY" should match "New York", "Coke" should match "Coca-Cola").
-    - If the guess captures the core meaning/entity of the correct answer, it is correct.
-    - If the guess is fundamentally different or a different category of thing, it is incorrect.
-
-    Output format:
-    - Respond with EXACTLY '1' if the guess is correct/close enough.
-    - Respond with EXACTLY '0' if the guess is incorrect.
-    - DO NOT include any other text or explanation.`;
-
-    try {
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().trim();
-        if (text === '1') return 1;
-        if (text === '0') return 0;
-
-        // Handle cases where model might include extra text
-        if (text.includes('1')) return 1;
-        return 0;
-    } catch (error) {
-        console.error('AI Score calculation failed, using local fallback:', error);
-
-        // Local Semantic Fallback (Fuzzy-ish match)
+    for (const [id, guess] of Object.entries(guesses)) {
         const cleanGuess = guess.toLowerCase().trim();
-        const cleanCorrect = correctAnswer.toLowerCase().trim();
 
-        // 1. Exact match (case insensitive)
-        if (cleanGuess === cleanCorrect) return 1;
-
-        // 2. Simple inclusion (e.g., "brussel sprouts" vs "sprouts")
-        if (cleanGuess.length > 3 && (cleanCorrect.includes(cleanGuess) || cleanGuess.includes(cleanCorrect))) {
-            return 1;
+        // Exact match
+        if (cleanGuess === cleanCorrect) {
+            scores[id] = 1;
+            continue;
         }
 
-        // 3. Very basic typo check (if lengths are similar and first few chars match)
-        if (Math.abs(cleanGuess.length - cleanCorrect.length) <= 2 && cleanGuess.substring(0, 3) === cleanCorrect.substring(0, 3)) {
-            return 1;
+        // Simple typo check (Levenshtein distance <= 2 for words > 3 chars)
+        if (cleanGuess.length > 3 && Math.abs(cleanGuess.length - cleanCorrect.length) <= 2) {
+            if (levenshteinDistance(cleanGuess, cleanCorrect) <= 2) {
+                scores[id] = 1;
+                continue;
+            }
         }
 
-        return 0;
+        // If not matched locally, add to pending for AI
+        pendingGuesses[id] = guess;
+        // Default to 0 in case AI fails or returns nothing
+        scores[id] = 0;
     }
+
+    // If no pending guesses, return immediately
+    if (Object.keys(pendingGuesses).length === 0) {
+        return scores;
+    }
+
+    if (!apiKey) {
+        console.warn('GEMINI_API_KEY not configured, skipping AI grading');
+        return scores; // Fallback to local-only (0 for non-matches)
+    }
+
+    // 2. Batch AI Grading
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const prompt = `System: You are a semantic judge for a trivia game.
+Question: "${question}"
+Correct Answer: "${correctAnswer}"
+
+Candidates to evaluate:
+${JSON.stringify(pendingGuesses, null, 2)}
+
+Task:
+- Determine if each candidate answer is semantically "correct" or "close enough" (synonyms, misspellings, core concept matches).
+- Return a JSON object mapping the candidate ID to 1 (correct) or 0 (incorrect).
+- Strict JSON only. No markdown.
+
+Example Output:
+{
+  "user1": 1,
+  "user2": 0
+}`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const cleanText = text.replace(/```json|```/g, '').trim();
+        const aiScores = JSON.parse(cleanText) as Record<string, number>;
+
+        // Merge AI scores
+        for (const [id, score] of Object.entries(aiScores)) {
+            // Ensure we only update if it's 1, or just overwrite current 0
+            if (typeof score === 'number') {
+                scores[id] = score === 1 ? 1 : 0;
+            }
+        }
+    } catch (error) {
+        console.error('Batch AI grading failed:', error);
+        // Fallback is already 0
+    }
+
+    return scores;
+}
+
+function levenshteinDistance(a: string, b: string): number {
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1, // substitution
+                    Math.min(
+                        matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j] + 1 // deletion
+                    )
+                );
+            }
+        }
+    }
+
+    return matrix[b.length][a.length];
 }
