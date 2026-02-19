@@ -37,7 +37,22 @@ if (!admin.apps.length) {
 			}
 		}
 
-		// 2. Fallback to FIREBASE_SERVICE_ACCOUNT_JSON env var (Production)
+		// 2. Try individual env vars (Preferred Production)
+		if (!credential && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+			try {
+				const privateKey = cleanPrivateKey(env.FIREBASE_PRIVATE_KEY);
+				credential = admin.credential.cert({
+					projectId: PUBLIC_FIREBASE_PROJECT_ID,
+					clientEmail: env.FIREBASE_CLIENT_EMAIL,
+					privateKey
+				});
+				console.log('Firebase Admin: Initialized from individual env variables');
+			} catch (e) {
+				console.error('Firebase Admin: Individual env var initialization failed:', e);
+			}
+		}
+
+		// 3. Fallback to FIREBASE_SERVICE_ACCOUNT_JSON env var (Legacy Production)
 		if (!credential && env.FIREBASE_SERVICE_ACCOUNT_JSON) {
 			try {
 				let jsonStr = env.FIREBASE_SERVICE_ACCOUNT_JSON.trim();
@@ -48,7 +63,7 @@ if (!admin.apps.length) {
 					serviceAccount.private_key = cleanPrivateKey(serviceAccount.private_key);
 				}
 				credential = admin.credential.cert(serviceAccount);
-				console.log('Firebase Admin: Initialized from env variable');
+				console.log('Firebase Admin: Initialized from JSON env variable');
 			} catch (e) {
 				console.error('Firebase Admin: Env variable parsing failed:', e);
 			}
