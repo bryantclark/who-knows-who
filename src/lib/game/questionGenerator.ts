@@ -107,7 +107,11 @@ export async function generatePersonalQuestion(answerer: string, previousQuestio
 
 function getRandomFallback(answerer: string, previousQuestions: string[] = []): QuestionData {
   const availableFallbacks = FALLBACK_QUESTIONS.filter(f => {
-    const questionText = f.question.replace(/your/g, `${answerer}'s`).replace(/you/g, answerer);
+    let questionText = f.question
+      .replace(/your/g, `${answerer}'s`)
+      .replace(/do you/g, `does ${answerer}`)
+      .replace(/are you/g, `is ${answerer}`)
+      .replace(/you/g, answerer);
     return !previousQuestions.includes(questionText);
   });
 
@@ -115,7 +119,11 @@ function getRandomFallback(answerer: string, previousQuestions: string[] = []): 
   const fallback = sourceList[Math.floor(Math.random() * sourceList.length)];
 
   return {
-    question: fallback.question.replace(/your/g, `${answerer}'s`).replace(/you/g, answerer),
+    question: fallback.question
+      .replace(/your/g, `${answerer}'s`)
+      .replace(/do you/g, `does ${answerer}`)
+      .replace(/are you/g, `is ${answerer}`)
+      .replace(/you/g, answerer),
     type: fallback.type
   };
 }

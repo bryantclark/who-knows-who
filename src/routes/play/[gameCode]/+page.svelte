@@ -9,12 +9,15 @@
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import RoundResults from '$lib/components/RoundResults.svelte';
 	import SynergyMatrix from '$lib/components/SynergyMatrix.svelte';
+	import Lobby from '$lib/components/Lobby.svelte';
+	import Results from '$lib/components/Results.svelte';
 
 	let { data, form } = $props<{ data: any; form: any }>();
 
 	let gameData = $state<any>(null);
 	let players = $state<string[]>([]);
 	let answeredPlayers = $state<string[]>([]);
+	let scoreData = $state<any>({});
 
 	onMount(() => {
 		const gameRef = ref(db, `gamecode/${data.gameCode}`);
@@ -23,6 +26,7 @@
 				gameData = snapshot.val();
 				players = gameData.players ? Object.keys(gameData.players) : [];
 				answeredPlayers = gameData.answeredPlayers ? Object.keys(gameData.answeredPlayers) : [];
+				scoreData = gameData.scores || {};
 			}
 		});
 
@@ -32,6 +36,7 @@
 	const isAnswerer = $derived(gameData?.currentAnswerer?.name === data.playerName);
 	const hasAnswered = $derived(answeredPlayers.includes(data.playerName));
 	const isRoundComplete = $derived(gameData?.roundStatus === 'complete');
+	const gameStatus = $derived(gameData?.status || 'waiting');
 </script>
 
 <div class="max-w-7xl mx-auto px-4 py-8 md:py-12" in:fade={{ duration: 800 }}>
@@ -50,6 +55,10 @@
 				<p class="text-slate-500 font-medium uppercase tracking-widest text-xs">Connecting...</p>
 			</div>
 		</div>
+	{:else if gameStatus === 'waiting'}
+		<Lobby gameCode={data.gameCode} {players} playerName={data.playerName} host={gameData.host} />
+	{:else if gameStatus === 'finished'}
+		<Results {players} {scoreData} playerName={data.playerName} gameCode={data.gameCode} />
 	{:else}
 		<div class="space-y-12">
 			<!-- Main Action Area -->

@@ -32,6 +32,7 @@ export const actions: Actions = {
 				players: {
 					[playerName]: true
 				},
+				host: playerName,
 				createdAt: Date.now(),
 				status: 'waiting'
 			});

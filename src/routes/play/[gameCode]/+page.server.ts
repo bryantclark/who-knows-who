@@ -29,14 +29,15 @@ export const load: PageServerLoad = async ({ cookies, params }) => {
 		}
 
 		const game = snapshot.val();
+		const status = game.status || 'waiting';
 
 		// Ensure player is in game
 		if (!game.players || !game.players[playerName]) {
 			await gameRef.child('players').update({ [playerName]: true });
 		}
 
-		// Handle question generation if not present
-		if (!game.questions) {
+		// Handle question generation if not present and we are playing
+		if (status === 'playing' && !game.questions) {
 			const playersList = Object.keys(game.players || { [playerName]: true });
 			const answerer = playersList[Math.floor(Math.random() * playersList.length)];
 			const usedQuestions = game.usedQuestions || [];
@@ -46,22 +47,29 @@ export const load: PageServerLoad = async ({ cookies, params }) => {
 				questions: questionData.question,
 				currentAnswerer: { name: answerer },
 				roundStatus: 'waiting',
-				usedQuestions: [...usedQuestions, questionData.question]
+				usedQuestions: [...usedQuestions, questionData.question],
+				[`questionCounts/${answerer}`]: 1
 			});
 
 			return {
 				question: questionData.question,
 				answerer: answerer,
 				gameCode,
-				playerName
+				playerName,
+				gameStatus: status,
+				host: game.host,
+				gameMode: game.gameMode
 			};
 		}
 
 		return {
-			question: game.questions,
-			answerer: game.currentAnswerer?.name || 'Unknown',
+			question: game.questions || null,
+			answerer: game.currentAnswerer?.name || null,
 			gameCode,
-			playerName
+			playerName,
+			gameStatus: status,
+			host: game.host,
+			gameMode: game.gameMode || null
 		};
 	} catch (error) {
 		if (isRedirect(error)) throw error;
@@ -70,12 +78,42 @@ export const load: PageServerLoad = async ({ cookies, params }) => {
 			question: 'Could not load the question',
 			error: 'Something went wrong. Please try again.',
 			gameCode,
-			playerName
+			playerName,
+			gameStatus: 'error'
 		};
 	}
 };
 
 export const actions: Actions = {
+	startGame: async ({ params, cookies, request }) => {
+		const gameCode = params.gameCode?.toUpperCase();
+		const playerName = cookies.get('playerName');
+		const data = await request.formData();
+		const gameMode = data.get('gameMode')?.toString() || 'unlimited';
+
+		if (!gameCode || !playerName) return fail(400, { error: 'Missing session' });
+
+		try {
+			if (!adminDb) return fail(500, { error: 'Database not initialized' });
+			const gameRef = adminDb.ref(`gamecode/${gameCode}`);
+			const snapshot = await gameRef.get();
+			const game = snapshot.val();
+
+			if (!game) return fail(404, { error: 'Game not found' });
+			if (game.host !== playerName) return fail(403, { error: 'Only the host can start the game' });
+
+			await gameRef.update({
+				status: 'playing',
+				gameMode,
+				questionCounts: {} // Initialize counts
+			});
+
+			return { success: true };
+		} catch (error) {
+			console.error('Error starting game:', error);
+			return fail(500, { error: 'Failed to start game' });
+		}
+	},
 	submitAnswer: async ({ request, cookies, params }) => {
 		const gameCode = params.gameCode?.toUpperCase();
 		const playerName = cookies.get('playerName');
@@ -146,19 +184,49 @@ export const actions: Actions = {
 			if (!game) return fail(404, { error: 'Game not found' });
 
 			const players = Object.keys(game.players || {});
-			const nextAnswerer = players[Math.floor(Math.random() * players.length)];
-			const usedQuestions = game.usedQuestions || [];
-			const questionData = await generatePersonalQuestion(nextAnswerer, usedQuestions);
 
-			await gameRef.update({
-				questions: questionData.question,
-				currentAnswerer: { name: nextAnswerer },
-				correctAnswer: null,
-				answeredPlayers: {},
-				guesses: {},
-				roundStatus: 'waiting',
-				usedQuestions: [...usedQuestions, questionData.question]
-			});
+			// Competitive mode check
+			if (game.gameMode === 'competitive') {
+				const counts = game.questionCounts || {};
+				const finishedPlayers = players.filter(p => (counts[p] || 0) >= 4);
+
+				if (finishedPlayers.length === players.length) {
+					await gameRef.update({ status: 'finished' });
+					return { success: true };
+				}
+
+				// Pick someone who hasn't reached 4 yet
+				const availablePlayers = players.filter(p => (counts[p] || 0) < 4);
+				const nextAnswerer = availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
+				const usedQuestions = game.usedQuestions || [];
+				const questionData = await generatePersonalQuestion(nextAnswerer, usedQuestions);
+
+				await gameRef.update({
+					questions: questionData.question,
+					currentAnswerer: { name: nextAnswerer },
+					correctAnswer: null,
+					answeredPlayers: {},
+					guesses: {},
+					roundStatus: 'waiting',
+					usedQuestions: [...usedQuestions, questionData.question],
+					[`questionCounts/${nextAnswerer}`]: (counts[nextAnswerer] || 0) + 1
+				});
+			} else {
+				// Unlimited mode
+				const nextAnswerer = players[Math.floor(Math.random() * players.length)];
+				const usedQuestions = game.usedQuestions || [];
+				const questionData = await generatePersonalQuestion(nextAnswerer, usedQuestions);
+
+				await gameRef.update({
+					questions: questionData.question,
+					currentAnswerer: { name: nextAnswerer },
+					correctAnswer: null,
+					answeredPlayers: {},
+					guesses: {},
+					roundStatus: 'waiting',
+					usedQuestions: [...usedQuestions, questionData.question]
+				});
+			}
 
 			return { success: true };
 		} catch (error) {
