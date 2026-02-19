@@ -105,13 +105,13 @@
 								for="playerName"
 								class="block text-xs font-black uppercase tracking-[0.3em] text-slate-500 ml-1"
 							>
-								Your Handle
+								Your Name
 							</label>
 							<input
 								type="text"
 								name="playerName"
 								id="playerName"
-								placeholder="E.g. GhostProtocol"
+								placeholder="John Doe"
 								required
 								class="vibrant-input"
 								bind:value={playerName}
@@ -166,13 +166,13 @@
 								for="playerName"
 								class="block text-xs font-black uppercase tracking-[0.3em] text-slate-500 ml-1"
 							>
-								Host Handle
+								Your Name
 							</label>
 							<input
 								type="text"
 								name="playerName"
 								id="playerName"
-								placeholder="E.g. GameMaster"
+								placeholder="John Doe"
 								required
 								class="vibrant-input"
 								bind:value={playerName}

@@ -39,12 +39,14 @@ export const load: PageServerLoad = async ({ cookies, params }) => {
 		if (!game.questions) {
 			const playersList = Object.keys(game.players || { [playerName]: true });
 			const answerer = playersList[Math.floor(Math.random() * playersList.length)];
-			const questionData = await generatePersonalQuestion(answerer);
+			const usedQuestions = game.usedQuestions || [];
+			const questionData = await generatePersonalQuestion(answerer, usedQuestions);
 
 			await gameRef.update({
 				questions: questionData.question,
 				currentAnswerer: { name: answerer },
-				roundStatus: 'waiting'
+				roundStatus: 'waiting',
+				usedQuestions: [...usedQuestions, questionData.question]
 			});
 
 			return {
@@ -118,9 +120,8 @@ export const actions: Actions = {
 			const updatedAnswered = Object.keys(updatedAnsweredSnapshot.val() || {});
 
 			if (updatedAnswered.length === players.length) {
-				// Round complete logic will be handled by a "Next Round" action
-				// to avoid race conditions and let everyone see the results
 				await gameRef.update({ roundStatus: 'complete' });
+				await processRoundScores(gameCode);
 			} else {
 				await gameRef.update({ roundStatus: 'inProgress' });
 			}
@@ -139,9 +140,6 @@ export const actions: Actions = {
 			if (!adminDb) return fail(500, { error: 'Database not initialized' });
 			const gameRef = adminDb.ref(`gamecode/${gameCode}`);
 
-			// Calculate scores before clearing round data
-			await processRoundScores(gameCode);
-
 			const snapshot = await gameRef.get();
 			const game = snapshot.val();
 
@@ -149,7 +147,8 @@ export const actions: Actions = {
 
 			const players = Object.keys(game.players || {});
 			const nextAnswerer = players[Math.floor(Math.random() * players.length)];
-			const questionData = await generatePersonalQuestion(nextAnswerer);
+			const usedQuestions = game.usedQuestions || [];
+			const questionData = await generatePersonalQuestion(nextAnswerer, usedQuestions);
 
 			await gameRef.update({
 				questions: questionData.question,
@@ -157,7 +156,8 @@ export const actions: Actions = {
 				correctAnswer: null,
 				answeredPlayers: {},
 				guesses: {},
-				roundStatus: 'waiting'
+				roundStatus: 'waiting',
+				usedQuestions: [...usedQuestions, questionData.question]
 			});
 
 			return { success: true };

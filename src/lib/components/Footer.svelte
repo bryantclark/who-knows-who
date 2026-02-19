@@ -32,6 +32,19 @@
 			ultimate connection.
 		</p>
 
+		<a
+			href="https://mistral.ai"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-all duration-300"
+		>
+			<span class="text-[10px] uppercase font-black tracking-widest text-slate-500">Powered by</span
+			>
+			<span class="text-[10px] uppercase font-black tracking-widest vibrant-gradient-text"
+				>Mistral AI</span
+			>
+		</a>
+
 		<div class="flex items-center gap-6">
 			<a
 				href="https://github.com/bryantclark/who-knows-who"

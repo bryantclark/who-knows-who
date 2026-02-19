@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GEMINI_API_KEY } from '$env/static/private';
+import { GEMINI_API_KEY, MINSTRAL_API_KEY } from '$env/static/private';
 
 export interface QuestionData {
   question: string;
@@ -32,24 +32,60 @@ RULES:
 - Format as a JSON object with 'question' (string) and 'type' (one of the categories).
 - Make sure the questions are safe for children.
 - Keep the questions fairly short and to the point.
+{{avoid_instruction}}
 
 Output ONLY valid JSON.`;
 
-export async function generatePersonalQuestion(answerer: string): Promise<QuestionData> {
+export async function generatePersonalQuestion(answerer: string, previousQuestions: string[] = []): Promise<QuestionData> {
+  const avoidInstruction = previousQuestions.length > 0
+    ? `- IMPORTANT: Do NOT generate any of these previous questions: ${previousQuestions.join(', ')}`
+    : '';
+
+  const prompt = SYSTEM_PROMPT.replace(/{{answerer}}/g, answerer).replace(/{{avoid_instruction}}/g, avoidInstruction);
+
+  // 1. Try Mistral if available
+  if (MINSTRAL_API_KEY) {
+    try {
+      const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${MINSTRAL_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'pixtral-large-latest',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content) as QuestionData;
+          if (parsed.question && parsed.type) {
+            console.log('Question generated via Mistral');
+            return parsed;
+          }
+        }
+      }
+      console.warn('Mistral generation failed or returned invalid data, falling back to Gemini.');
+    } catch (error) {
+      console.error('Mistral generation error:', error);
+    }
+  }
+
+  // 2. Fallback to Gemini
   const apiKey = GEMINI_API_KEY;
   if (!apiKey) {
-    console.warn('GEMINI_API_KEY is not configured, using fallback question.');
-    return getRandomFallback(answerer);
+    console.warn('Neither Mistral nor Gemini API keys are configured, using static fallback.');
+    return getRandomFallback(answerer, previousQuestions);
   }
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' }); // Updated model name
-
-    const prompt = SYSTEM_PROMPT.replace('{{answerer}}', answerer).replace(
-      '{{answerer}}',
-      answerer
-    ); // Replace multiple occurrences if needed
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
@@ -65,21 +101,21 @@ export async function generatePersonalQuestion(answerer: string): Promise<Questi
     return parsedResponse;
   } catch (error) {
     console.error('Question generation failed:', error);
-    return getRandomFallback(answerer);
+    return getRandomFallback(answerer, previousQuestions);
   }
 }
 
-function getRandomFallback(answerer: string): QuestionData {
-  const fallback = FALLBACK_QUESTIONS[Math.floor(Math.random() * FALLBACK_QUESTIONS.length)];
-  // Replace "your" with "answerer's" if needed, but the fallbacks use "your" which might need adjustment
-  // Actually, the original code used "answerer's" in the template.
-  // My CONSTANTS above use "your". Let's fix that dynamically or just use generic versions.
-  // The original used `${answerer}`.
+function getRandomFallback(answerer: string, previousQuestions: string[] = []): QuestionData {
+  const availableFallbacks = FALLBACK_QUESTIONS.filter(f => {
+    const questionText = f.question.replace(/your/g, `${answerer}'s`).replace(/you/g, answerer);
+    return !previousQuestions.includes(questionText);
+  });
 
-  // Let's adjust the fallback usage to be consistent.
-  // We will treat the fallbacks as templates too.
+  const sourceList = availableFallbacks.length > 0 ? availableFallbacks : FALLBACK_QUESTIONS;
+  const fallback = sourceList[Math.floor(Math.random() * sourceList.length)];
+
   return {
-    question: fallback.question.replace('your', `${answerer}'s`).replace('you', answerer),
+    question: fallback.question.replace(/your/g, `${answerer}'s`).replace(/you/g, answerer),
     type: fallback.type
   };
 }

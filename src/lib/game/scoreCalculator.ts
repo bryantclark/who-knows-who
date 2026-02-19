@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GEMINI_API_KEY } from '$env/static/private';
+import { GEMINI_API_KEY, MINSTRAL_API_KEY } from '$env/static/private';
 
 export async function calculateKnowledgeScore(
     question: string,
@@ -51,17 +51,7 @@ export async function calculateBatchScores(
         return scores;
     }
 
-    if (!apiKey) {
-        console.warn('GEMINI_API_KEY not configured, skipping AI grading');
-        return scores; // Fallback to local-only (0 for non-matches)
-    }
-
-    // 2. Batch AI Grading
-    try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-        const prompt = `System: You are a semantic judge for a trivia game.
+    const prompt = `System: You are a semantic judge for a trivia game.
 Question: "${question}"
 Correct Answer: "${correctAnswer}"
 
@@ -78,6 +68,53 @@ Example Output:
   "user1": 1,
   "user2": 0
 }`;
+
+    // 2. Try Mistral Grading if available
+    if (MINSTRAL_API_KEY) {
+        try {
+            const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${MINSTRAL_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'mistral-large-latest',
+                    messages: [{ role: 'user', content: prompt }],
+                    response_format: { type: 'json_object' }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const content = data.choices[0]?.message?.content;
+                if (content) {
+                    const aiScores = JSON.parse(content) as Record<string, number>;
+                    for (const [id, score] of Object.entries(aiScores)) {
+                        if (typeof score === 'number') {
+                            scores[id] = score === 1 ? 1 : 0;
+                        }
+                    }
+                    console.log('Grading completed via Mistral');
+                    return scores;
+                }
+            }
+            console.warn('Mistral grading failed, falling back to Gemini.');
+        } catch (error) {
+            console.error('Mistral grading error:', error);
+        }
+    }
+
+    // 3. Fallback to Gemini
+    if (!apiKey) {
+        console.warn('Neither Mistral nor Gemini API keys are configured, skipping AI grading');
+        return scores;
+    }
+
+    // 4. Batch AI Grading
+    try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         const result = await model.generateContent(prompt);
         const text = result.response.text();
